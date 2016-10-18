@@ -72,7 +72,7 @@ void insert_at_index(List *list, Node *node, size_t index) {
 
     Node *head = list->head;
 
-    // Catch append to front
+    // Catch append to front - in this case it is necessary to modify the list itself!
     if (index == 0) {
         node->next = head;
         list->head = node;
