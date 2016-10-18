@@ -65,7 +65,7 @@ size_t size_of_(List *list) {
 void insert_at_index(List *list, Node *node, size_t index) {
 
     // Catch index out of range
-    if (index > size_of_(list)) {
+    if (index > size_of_(list) || index < 0) {
         perror("List index out of range!");
         return;
     }
