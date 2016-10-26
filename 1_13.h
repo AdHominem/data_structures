@@ -3,6 +3,10 @@
 #include <assert.h>
 #include <memory.h>
 
+
+// DATA STRUCTURES
+
+
 typedef struct node Node;
 
 typedef struct integer_array {
@@ -26,6 +30,10 @@ typedef struct tree {
     Node *root;
     size_t degree;
 } Tree;
+
+
+// CONSTRUCTORS AND DESTRUCTORS
+
 
 IntegerArray *create_integer_array(size_t length) {
     IntegerArray *result = malloc(sizeof(IntegerArray));
@@ -113,7 +121,7 @@ Tree *create_tree(size_t degree) {
         return NULL;
     }
 
-    result->root = create_node(degree);
+    result->root = NULL;
     result->degree = degree;
     return result;
 }
@@ -126,121 +134,175 @@ Tree *destroy_tree(Tree *tree) {
     return NULL;
 }
 
-///**
-//* Checks whether a new value is smaller than the current key i.
-//* If it is, it will be inserted at subtree i.
-//* Else check if the current key is maybe zero.
-//* If it is, we can safely place the new value here.
-//* Else check if we are at the last key.
-//* If so, we need to either insert value in the right subtree i+1, or create a new one if it didn't exist.
-//*/
-//void add_internal(Node *node, int value) {
-//
-//    for (size_t i = 0; i < node->degree - 1; i++) {
-//
-//        if (node->keys[i] >= value) {
-//            if (node->children[i] != NULL) {
-//                add_internal(node->children[i], value);
-//            } else {
-//                node->children[i] = create_node(node->degree);
-//                node->children[i]->keys[0] = value;
-//                node->children[i]->keys_head += 1;
-//                return;
-//            }
-//        } else if (i == node->keys_head) {
-//            node->keys[i] = value;
-//            node->keys_head += 1;
-//            return;
-//        } else if (i == node->degree - 2){
-//            if (node->children[i + 1] != NULL) {
-//                add_internal(node->children[i + 1], value);
-//            } else {
-//                node->children[i + 1] = create_node(node->degree);
-//                node->children[i + 1]->keys[0] = value;
-//                node->children[i + 1]->keys_head += 1;
-//                return;
-//            }
-//        }
-//    }
-//}
-//
-//
-//void add(Tree *tree, int value) {
-//    if (tree->root == NULL) {
-//        tree->root = create_node(tree->degree);
-//        tree->root->keys[0] = value;
-//        tree->root->keys_head = 1;
-//    } else {
-//        add_internal(tree->root, value);
-//    }
-//}
-//
-//void destroy_nodes_recursively(Node *node) {
-//    if (node->children) {
-//
-//    }
-//    Node *left = node->left;
-//    Node *right = node->right;
-//
-//    if (left) {
-//        destroy_nodes_recursively(left);
-//    }
-//
-//    if (right) {
-//        destroy_nodes_recursively(right);
-//    }
-//
-//    destroy_node(node);
-//}
-//
-//void destroy_tree(Tree *tree) {
-//    if (tree != NULL) {
-//        destroy_nodes_recursively(tree->root);
-//        free(tree);
-//    }
-//}
-//
-//// Infix notation
-//void print_nodes(Node *root) {
-//    Node *left = root->left;
-//    Node *right = root->right;
-//
-//    if (left) {
-//        print_nodes(left);
-//    }
-//
-//    printf("%d ", root->value);
-//
-//    if (right) {
-//        print_nodes(right);
-//    }
-//}
-//
-//void print_tree(Tree *tree) {
-//    if (tree->root) {
-//        print_nodes(tree->root);
-//        printf("\n");
-//    } else {
-//        printf("Tree is empty!\n");
-//    }
-//}
-//
-//// Decides whether to insert left or right and then whether here or down the subtree
-//void add_internal(Node *root, int value) {
-//    Node **relevant_node = (root->value >= value) ? &root->left : &root->right;
-//
-//    if (*relevant_node) {
-//        add_internal(*relevant_node, value);
-//    } else {
-//        *relevant_node = create_node(value);
-//    }
-//}
-//
-//void add(Tree *tree, int value) {
-//    if (tree->root) {
-//        add_internal(tree->root, value);
-//    } else {
-//        tree->root = create_node(value);
-//    }
-//}
 
+// FUNCTIONS
+
+
+void print_integer_array(IntegerArray *integerArray) {
+    printf("[");
+    for (size_t i = 0; i < integerArray->length; ++i) {
+        printf("%d", integerArray->elements[i]);
+        if (i != integerArray->length - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+}
+
+// Prints node keys, also showing how many of the key slots are still unset
+void print_node_keys(Node *node) {
+    printf("[");
+    for (size_t j = 0; j < node->keys->length; ++j) {
+        if (j < node->keys_head) {
+            printf("%d", node->keys->elements[j]);
+        } else {
+            printf(" ");
+        }
+
+        if (j != node->keys->length - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+}
+
+// Checks in which child node the value may fit, or if it fits inside the key array.
+// Will create a new child node if necessary.
+void add_internal(Node *node, int value) {
+
+    for (size_t i = 0; i < node->degree - 1; i++) {
+
+        if (node->keys->elements[i] >= value) {
+            //printf("It seems %d is smaller than %d, will be inserted into my left child!\n", value, node->keys->elements[i]);
+            if (node->children->elements[i] != NULL) {
+                //printf("\tSince I have a left child, I'm going to insert there\n");
+                add_internal(node->children->elements[i], value);
+                return;
+            } else {
+                //printf("\tSeems I don't have a left child yet, creating one!\n");
+                node->children->elements[i] = create_node(node->degree);
+                node->children->elements[i]->keys->elements[0] = value;
+                node->children->elements[i]->keys_head += 1;
+                return;
+            }
+        } else if (i == node->keys_head) {
+            //printf("It seems %d might fit into my key array!\n", value);
+            node->keys->elements[i] = value;
+            node->keys_head += 1;
+            return;
+        } else if (i == node->degree - 2){
+            //printf("It seems %d is bigger than %d, will be inserted into my right child!\n", value, node->keys->elements[i]);
+            if (node->children->elements[i + 1] != NULL) {
+                //printf("\tSince I have a right child, I'm going to insert there\n");
+                add_internal(node->children->elements[i + 1], value);
+                return;
+            } else {
+                //printf("\tSeems I don't have a right child yet, creating one!\n");
+                node->children->elements[i + 1] = create_node(node->degree);
+                node->children->elements[i + 1]->keys->elements[0] = value;
+                node->children->elements[i + 1]->keys_head += 1;
+                return;
+            }
+        }
+    }
+}
+
+// Adds a new value to the tree and creates a root node if the tree is empty
+void add(Tree *tree, int value) {
+    if (tree->root == NULL) {
+        tree->root = create_node(tree->degree);
+        tree->root->keys->elements[0] = value;
+        tree->root->keys_head = 1;
+    } else {
+        add_internal(tree->root, value);
+    }
+}
+
+// Prints all the nodes recursively, indenting them for better readability
+void print_nodes(Node *node, size_t depth){
+    if (node != NULL) {
+        for (size_t key_index = 0; key_index < node->keys_head; key_index++) {
+            if (node->children->elements[key_index] != NULL) {
+                print_nodes(node->children->elements[key_index], depth + 1);
+            }
+        }
+
+        for(size_t i = 1; i < depth; i++)
+            printf("\t");
+
+        print_node_keys(node);
+
+        if (node->children->elements[node->degree - 1] != NULL) {
+            print_nodes(node->children->elements[node->degree - 1], depth + 1);
+        }
+    }
+}
+
+void print_tree(Tree *tree) {
+    print_nodes(tree->root, 1);
+}
+
+
+// TESTING
+
+
+int test() {
+
+//    // Testing integer arrays and printing them
+//    IntegerArray *integerArray = create_integer_array(10);
+//    for (size_t i = 0; i < integerArray->length; ++i) {
+//        integerArray->elements[i] = (int) (i + 5);
+//    }
+//    print_integer_array(integerArray);
+//    integerArray = destroy_integer_array(integerArray);
+//    assert (!integerArray);
+//
+//    // Test Node
+//    Node *node = create_node(2);
+//    node->keys->elements[0] = 42;
+//    printf("\n%d\n", node->keys->elements[0]);
+//    node = destroy_node(node);
+//    assert(!node);
+//
+//    // Test Tree and printing them
+//    Tree *tree = create_tree(2);
+//    tree->root = create_node(tree->degree);
+//    tree->root->keys->elements[0] = 1337;
+//    print_tree(tree);
+//    tree = destroy_tree(tree);
+//    assert(!tree);
+//
+//    // Test NodeArray
+//    NodeArray *nodeArray = create_node_array(2);
+//    nodeArray->elements[0] = create_node(2);
+//    nodeArray->elements[0]->keys->elements[0] = 42;
+//    nodeArray->elements[1] = create_node(2);
+//    nodeArray->elements[1]->keys->elements[0] = 33;
+//    printf("\n%d, %d", nodeArray->elements[0]->keys->elements[0], nodeArray->elements[1]->keys->elements[0]);
+//    nodeArray = destroy_node_array(nodeArray);
+//    assert(!nodeArray);
+//
+//    // Test add empty
+//    tree = create_tree(2);
+//    add(tree, 111);
+//    printf("\n%d\n", tree->root->keys->elements[0]);
+//    tree = destroy_tree(tree);
+
+    // Test add regular
+    Tree *tree = create_tree(4);
+    add(tree, 12);
+    add(tree, 17);
+    add(tree, 5);
+    add(tree, 1);
+    add(tree, 6);
+    add(tree, 22);
+    add(tree, 20);
+    add(tree, 18);
+    add(tree, 30);
+    add(tree, 29);
+    add(tree, 31);
+    print_tree(tree);
+    tree = destroy_tree(tree);
+
+    return 0;
+}
