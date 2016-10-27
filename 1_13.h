@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <memory.h>
+#include <time.h>
 
 
 // DATA STRUCTURES
@@ -171,6 +172,10 @@ void print_node_keys(Node *node) {
 // Will create a new child node if necessary.
 void add_internal(Node *node, int value) {
 
+    if (!node) {
+        return;
+    }
+
     for (size_t i = 0; i < node->degree - 1; i++) {
 
         if (node->keys->elements[i] >= value) {
@@ -246,6 +251,10 @@ void print_tree(Tree *tree) {
 
 Node *search_internal(Node *node, int value) {
 
+    if (!node) {
+        return NULL;
+    }
+
     for (size_t i = 0; i < node->keys_head; ++i) {
 
         // Check if value is in the keys
@@ -276,62 +285,28 @@ Node *search(Tree *tree, int value) {
 
 // TESTING
 
+void add_random_nodes(Tree *tree) {
+    srand((unsigned int) time(NULL));
+    size_t insertions = (size_t) (rand() % 20 + 3);
+    printf("Adding ");
+
+    int random, old, to_add;
+    for (size_t i = 0; i < insertions; ++i) {
+        random = rand();
+        old = random;
+        to_add = abs((random + old) % 13);
+        add(tree, to_add);
+        printf("%d ", to_add);
+    }
+    printf("\n");
+}
 
 int test() {
 
-//    // Testing integer arrays and printing them
-//    IntegerArray *integerArray = create_integer_array(10);
-//    for (size_t i = 0; i < integerArray->length; ++i) {
-//        integerArray->elements[i] = (int) (i + 5);
-//    }
-//    print_integer_array(integerArray);
-//    integerArray = destroy_integer_array(integerArray);
-//    assert (!integerArray);
-//
-//    // Test Node
-//    Node *node = create_node(2);
-//    node->keys->elements[0] = 42;
-//    printf("\n%d\n", node->keys->elements[0]);
-//    node = destroy_node(node);
-//    assert(!node);
-//
-//    // Test Tree and printing them
-//    Tree *tree = create_tree(2);
-//    tree->root = create_node(tree->degree);
-//    tree->root->keys->elements[0] = 1337;
-//    print_tree(tree);
-//    tree = destroy_tree(tree);
-//    assert(!tree);
-//
-//    // Test NodeArray
-//    NodeArray *nodeArray = create_node_array(2);
-//    nodeArray->elements[0] = create_node(2);
-//    nodeArray->elements[0]->keys->elements[0] = 42;
-//    nodeArray->elements[1] = create_node(2);
-//    nodeArray->elements[1]->keys->elements[0] = 33;
-//    printf("\n%d, %d", nodeArray->elements[0]->keys->elements[0], nodeArray->elements[1]->keys->elements[0]);
-//    nodeArray = destroy_node_array(nodeArray);
-//    assert(!nodeArray);
-//
-//    // Test add empty
-//    tree = create_tree(2);
-//    add(tree, 111);
-//    printf("\n%d\n", tree->root->keys->elements[0]);
-//    tree = destroy_tree(tree);
-
-    // Test add regular
     Tree *tree = create_tree(4);
-    add(tree, 20);
-    add(tree, 18);
-    add(tree, 12);
-    add(tree, 17);
-    add(tree, 5);
-    add(tree, 1);
-    add(tree, 6);
-    add(tree, 22);
-    add(tree, 30);
-    add(tree, 29);
-    add(tree, 31);
+
+    add_random_nodes(tree);
+
     print_tree(tree);
     tree = destroy_tree(tree);
 

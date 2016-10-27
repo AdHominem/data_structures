@@ -76,7 +76,7 @@ Graph *destroy_graph(Graph *graph) {
 }
 
 void print_graph_as_matrix(Graph *graph) {
-    printf("\t");
+    printf("    ");
     for (int i = 0; i < NODES_COUNT; ++i) {
         printf("%3d ", i);
     }
