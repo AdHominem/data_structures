@@ -35,6 +35,7 @@ typedef struct tree {
 // CONSTRUCTORS AND DESTRUCTORS
 
 
+// Treating integer arrays as a dedicated data structure makes keeping track of the length easier
 IntegerArray *create_integer_array(size_t length) {
     IntegerArray *result = malloc(sizeof(IntegerArray));
     if (result == NULL) {
@@ -220,19 +221,20 @@ void add(Tree *tree, int value) {
 
 // Prints all the nodes recursively, indenting them for better readability
 void print_nodes(Node *node, size_t depth){
-    if (node != NULL) {
+    if (node) {
         for (size_t key_index = 0; key_index < node->keys_head; key_index++) {
             if (node->children->elements[key_index] != NULL) {
                 print_nodes(node->children->elements[key_index], depth + 1);
             }
         }
 
-        for(size_t i = 1; i < depth; i++)
+        for (size_t indentations = 1; indentations < depth; indentations++) {
             printf("\t");
+        }
 
         print_node_keys(node);
 
-        if (node->children->elements[node->degree - 1] != NULL) {
+        if (node->children->elements[node->degree - 1]) {
             print_nodes(node->children->elements[node->degree - 1], depth + 1);
         }
     }
@@ -240,6 +242,35 @@ void print_nodes(Node *node, size_t depth){
 
 void print_tree(Tree *tree) {
     print_nodes(tree->root, 1);
+}
+
+Node *search_internal(Node *node, int value) {
+
+    for (size_t i = 0; i < node->keys_head; ++i) {
+
+        // Check if value is in the keys
+        if (node->keys->elements[i] == value) {
+            return node;
+        }
+
+        // Else check if it's too small to fit, so we need to go down the left subtree
+        else if (value < node->keys->elements[i]) {
+            return search_internal(node->children->elements[i], value);
+        }
+
+        // Else check if we are at the last key
+        else if (i == node->degree - 2) {
+            // Now value is bigger than the last element and could only be in the right child
+            // Only the last key in the array can have a right child
+            return search_internal(node->children->elements[i + 1], value);
+        }
+    }
+    return NULL;
+}
+
+// Returns a pointer to the containing Node or NULL, if value not in graph
+Node *search(Tree *tree, int value) {
+    return search_internal(tree->root, value);
 }
 
 
@@ -290,19 +321,20 @@ int test() {
 
     // Test add regular
     Tree *tree = create_tree(4);
+    add(tree, 20);
+    add(tree, 18);
     add(tree, 12);
     add(tree, 17);
     add(tree, 5);
     add(tree, 1);
     add(tree, 6);
     add(tree, 22);
-    add(tree, 20);
-    add(tree, 18);
     add(tree, 30);
     add(tree, 29);
     add(tree, 31);
     print_tree(tree);
     tree = destroy_tree(tree);
+
 
     return 0;
 }

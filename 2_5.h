@@ -6,7 +6,8 @@
 
 #define NODES_COUNT 20
 
-// Each node has a value and for each existing node the binary pointers array marks a link (1) or no link (0)
+// Each node has a value and for each existing node the binary pointers array
+// marks a link (1) or no link (0) to another node
 typedef struct node {
     int value;
     int pointers[NODES_COUNT];
@@ -20,6 +21,11 @@ typedef struct graph {
 // Initially, a node always has a value and no links
 Node *create_node(int value) {
     Node *result = malloc(sizeof(Node));
+    if (result == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
+
     result->value = value;
     for (int i = 0; i < NODES_COUNT; ++i) {
         result->pointers[i] = 0;
@@ -36,6 +42,10 @@ Node *destroy_node(Node *node) {
 
 Graph *create_random_graph() {
     Graph *result = malloc(sizeof(Graph));
+    if (result == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
 
     for (int i = 0; i < NODES_COUNT; ++i) {
         result->nodes[i] = create_node(i);
@@ -65,7 +75,7 @@ Graph *destroy_graph(Graph *graph) {
     return NULL;
 }
 
-void print_graph(Graph *graph) {
+void print_graph_as_matrix(Graph *graph) {
     printf("\t");
     for (int i = 0; i < NODES_COUNT; ++i) {
         printf("%3d ", i);
@@ -81,9 +91,23 @@ void print_graph(Graph *graph) {
     }
 }
 
+void print_graph_as_list(Graph *graph) {
+    for (int i = 0; i < NODES_COUNT; ++i) {
+        printf("%d: ", i);
+        for (int j = 0; j < NODES_COUNT; ++j) {
+            if (graph->nodes[i]->pointers[j]) {
+                printf("--> %d ", j);
+            }
+        }
+        printf("\n");
+    }
+}
+
 int test() {
     Graph *graph = create_random_graph();
-    print_graph(graph);
+    print_graph_as_list(graph);
+    printf("\n");
+    print_graph_as_matrix(graph);
     graph = destroy_graph(graph);
 
     return 0;
