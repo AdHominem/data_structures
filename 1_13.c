@@ -3,6 +3,8 @@
 #include <assert.h>
 #include <memory.h>
 #include <time.h>
+#include <limits.h>
+#include <stdint.h>
 
 
 // DATA STRUCTURES
@@ -301,15 +303,47 @@ void add_random_nodes(Tree *tree) {
     printf("\n");
 }
 
-int test() {
+int main() {
 
-    Tree *tree = create_tree(4);
 
-    add_random_nodes(tree);
+    printf("#########################\n"
+                   "# N-Aray Tree Simulator #\n"
+                   "#########################\n\n"
+                   "Warning: Expecting natural numbers > 2. \n"
+                   "Wrong input will lead to undefined behavior!\n\n"
+                   "Enter degree: \n");
+
+    size_t degree;
+    scanf("%zu", &degree);
+
+    Tree *tree = create_tree(degree);
+    printf("Created a tree of size %zu\n\n", degree);
+    printf("Commands: \n"
+                   "\tany number - adds the number to the tree\n"
+                   "\t\"exit\" - quit\n"
+                   "\t\"print\" - print the tree\n");
+    printf("Warning: Expecting integers!\n");
+
+    int value;
+    char buf[BUFSIZ];
+    char *p;
+
+    do {
+        fgets(buf, sizeof(buf), stdin);
+        if (!strncmp(buf, "print", 5)) {
+            print_tree(tree);
+        } else {
+            value = (int) strtol(buf, &p, 10);
+
+            if (buf[0] != '\n' && (*p == '\n' || *p == '\0')) {
+                add(tree, value);
+                printf ("Added %d to the tree\n", value);
+            }
+        }
+    } while (strncmp(buf, "exit", 4) != 0);
 
     print_tree(tree);
-    tree = destroy_tree(tree);
-
+    destroy_tree(tree);
 
     return 0;
 }

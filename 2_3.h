@@ -251,6 +251,29 @@ int test() {
 
     destroy_tree(tree);
 
+    while (strncmp(buf, "exit", 4) != 0)
+    {
+        fgets(buf, sizeof(buf), stdin);
+        if (!strncmp(buf, "print", 5)) {
+            print_tree(tree);
+        } else if (buf[0] == '-' || buf[0] == '+') {
+            memmove(buf, buf + 2, strlen(buf));
+            value = (int) strtol(buf, &p, 10);
+
+            if (*p == '\n' || *p == '\0') {
+                if (buf[0] == '+') {
+                    add(tree, value);
+                    printf ("Added %d to the tree\n", value);
+                } else {
+                    // remove node!
+                    printf ("Added %d to the tree\n", value);
+                }
+            } else {
+                printf ("Invalid number entered\n");
+            }
+        }
+    }
+
 
     return 0;
 }
