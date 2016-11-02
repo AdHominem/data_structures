@@ -229,6 +229,8 @@ void print_matrix(int matrix[NODES_COUNT][NODES_COUNT]) {
 
 int main() {
 
+    printf("Created a random graph!\n");
+
     AdjacencyList *graph = create_alist();
 
     int matrix[NODES_COUNT][NODES_COUNT];

@@ -319,7 +319,7 @@ int main() {
     Tree *tree = create_tree(degree);
     printf("Created a tree of size %zu\n\n", degree);
     printf("Commands: \n"
-                   "\tany number - adds the number to the tree\n"
+                   "\t<number> - adds the number to the tree\n"
                    "\t\"exit\" - quit\n"
                    "\t\"print\" - print the tree\n");
     printf("Warning: Expecting integers!\n");
