@@ -285,24 +285,6 @@ Node *search(Tree *tree, int value) {
 }
 
 
-// TESTING
-
-void add_random_nodes(Tree *tree) {
-    srand((unsigned int) time(NULL));
-    size_t insertions = (size_t) (rand() % 20 + 3);
-    printf("Adding ");
-
-    int random, old, to_add;
-    for (size_t i = 0; i < insertions; ++i) {
-        random = rand();
-        old = random;
-        to_add = abs((random + old) % 13);
-        add(tree, to_add);
-        printf("%d ", to_add);
-    }
-    printf("\n");
-}
-
 int main() {
 
 

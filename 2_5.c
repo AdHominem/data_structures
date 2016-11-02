@@ -160,12 +160,11 @@ void link_alnodes(AdjacencyListNode *from, AdjacencyListNode *to) {
     }
 }
 
-// An adjacency list contains n nodes
 typedef struct alist {
     AdjacencyListNode *nodes[NODES_COUNT];
 } AdjacencyList;
 
-// The adjacency list comes pre initialized with nodes of value 0-19
+// This adjacency list comes pre initialized with nodes of value 0-19
 AdjacencyList *create_alist() {
     AdjacencyList *result = malloc(sizeof(AdjacencyList));
     if (result == NULL) {
