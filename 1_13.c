@@ -307,7 +307,7 @@ int main() {
 
 
     printf("#########################\n"
-                   "# N-Aray Tree Simulator #\n"
+                   "# N-Ary Tree Simulator #\n"
                    "#########################\n\n"
                    "Warning: Expecting natural numbers > 2. \n"
                    "Wrong input will lead to undefined behavior!\n\n"

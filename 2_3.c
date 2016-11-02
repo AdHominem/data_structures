@@ -237,43 +237,52 @@ void add_random_nodes(Tree *tree) {
     printf("\n");
 }
 
-int test() {
+int main() {
+
+
+    printf("#########################\n"
+                   "# Binary Tree Simulator #\n"
+                   "#########################\n\n");
+
 
     Tree *tree = create_tree();
+    printf("Created a binary tree\n\n");
+    printf("Commands: \n"
+                   "\t+ <number> - adds the number to the tree\n"
+                   "\t- <number> - removes the number from the tree\n"
+                   "\t\"exit\" - quit\n"
+                   "\t\"print\" - print the tree\n");
+    printf("Warning: Expecting integers!\n");
 
-    add_random_nodes(tree);
+    int value;
+    char buf[BUFSIZ];
+    char *p;
 
-    print_tree(tree);
-
-    delete_random_nodes(tree);
-
-    print_tree(tree);
-
-    destroy_tree(tree);
-
-    while (strncmp(buf, "exit", 4) != 0)
-    {
+    do {
         fgets(buf, sizeof(buf), stdin);
         if (!strncmp(buf, "print", 5)) {
             print_tree(tree);
-        } else if (buf[0] == '-' || buf[0] == '+') {
-            memmove(buf, buf + 2, strlen(buf));
-            value = (int) strtol(buf, &p, 10);
+        } else if (buf[1] == ' ' && (buf[0] == '-' || buf[0] == '+')) {
+            char number[BUFSIZ];
+            memmove(number, buf + 2, strlen(buf));
+            value = (int) strtol(number, &p, 10);
 
             if (*p == '\n' || *p == '\0') {
                 if (buf[0] == '+') {
                     add(tree, value);
                     printf ("Added %d to the tree\n", value);
-                } else {
-                    // remove node!
-                    printf ("Added %d to the tree\n", value);
+                } else if (buf[0] == '-') {
+                    delete_node(tree, value);
+                    printf ("Removed %d from the tree\n", value);
                 }
             } else {
                 printf ("Invalid number entered\n");
             }
         }
-    }
+    } while (strncmp(buf, "exit", 4) != 0);
 
+    print_tree(tree);
+    destroy_tree(tree);
 
     return 0;
 }

@@ -3,5 +3,5 @@ project(data_structures)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -Wall -Wextra -Werror -Wno-unused-variable -Wno-unused-parameter")
 
-set(SOURCE_FILES 1_13.c)
+set(SOURCE_FILES 2_3.c)
 add_executable(data_structures ${SOURCE_FILES})
