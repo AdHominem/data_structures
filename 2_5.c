@@ -31,8 +31,8 @@ LinkedListNode *create_node(int value) {
 LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
     if (node) {
         node->next = destroy_nodes_recursively(node->next);
-        free(node);
     }
+    free(node);
     return NULL;
 }
 
@@ -47,8 +47,8 @@ LinkedList *create_linked_list() {
 LinkedList *destroy_linked_list(LinkedList *list) {
     if (list) {
         list->head = destroy_nodes_recursively(list->head);
-        free(list);
     }
+    free(list);
     return NULL;
 }
 
@@ -149,8 +149,8 @@ AdjacencyListNode *create_alnode(int value) {
 AdjacencyListNode *destroy_alnode(AdjacencyListNode *node) {
     if (node) {
         node->successors = destroy_linked_list(node->successors);
-        free(node);
     }
+    free(node);
     return NULL;
 }
 
@@ -183,8 +183,8 @@ AdjacencyList *destroy_alist(AdjacencyList *list) {
         for (int i = 0; i < NODES_COUNT; ++i) {
             list->nodes[i] = destroy_alnode(list->nodes[i]);
         }
-        free(list);
     }
+    free(list);
     return NULL;
 }
 

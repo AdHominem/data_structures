@@ -52,17 +52,17 @@ Node *destroy_node(Node *node) {
                 node->parent->right = NULL;
             }
         }
-        free(node);
     }
+    free(node);
     return NULL;
 }
 
 Node *destroy_nodes_recursively(Node *node) {
     if (node) {
-        node->left = destroy_node(node->left);
-        node->right = destroy_node(node->right);
-        free(node);
+        node->left = destroy_nodes_recursively(node->left);
+        node->right = destroy_nodes_recursively(node->right);
     }
+    free(node);
     return NULL;
 }
 
@@ -81,8 +81,8 @@ Tree *create_tree() {
 Tree *destroy_tree(Tree *tree) {
     if (tree) {
         tree->root = destroy_nodes_recursively(tree->root);
-        free(tree);
     }
+    free(tree);
     return NULL;
 }
 

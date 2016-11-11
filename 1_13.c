@@ -2,9 +2,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <memory.h>
-#include <time.h>
 #include <limits.h>
-#include <stdint.h>
+#include <errno.h>
 
 
 // DATA STRUCTURES
@@ -94,16 +93,16 @@ Node *create_node(size_t degree) {
 IntegerArray *destroy_integer_array(IntegerArray *integerArray) {
     if (integerArray) {
         free(integerArray->elements);
-        free(integerArray);
     }
+    free(integerArray);
     return NULL;
 }
 
 NodeArray *destroy_node_array(NodeArray *nodeArray) {
     if (nodeArray) {
         free(nodeArray->elements);
-        free(nodeArray);
     }
+    free(nodeArray);
     return NULL;
 }
 
@@ -111,8 +110,8 @@ Node *destroy_node(Node *node) {
     if (node) {
         node->keys = destroy_integer_array(node->keys);
         node->children = destroy_node_array(node->children);
-        free(node);
     }
+    free(node);
     return NULL;
 }
 
@@ -133,8 +132,8 @@ Tree *create_tree(size_t degree) {
 Tree *destroy_tree(Tree *tree) {
     if (tree) {
         tree->root = destroy_node(tree->root);
-        free(tree);
     }
+    free(tree);
     return NULL;
 }
 
@@ -288,15 +287,18 @@ Node *search(Tree *tree, int value) {
 int main() {
 
 
-    printf("#########################\n"
+    printf("########################\n"
                    "# N-Ary Tree Simulator #\n"
-                   "#########################\n\n"
-                   "Warning: Expecting natural numbers > 2. \n"
+                   "########################\n\n"
+                   "Warning: Expecting integers > 2. \n"
                    "Wrong input will lead to undefined behavior!\n\n"
                    "Enter degree: \n");
 
     size_t degree;
-    scanf("%zu", &degree);
+    if (scanf("%zu", &degree) == EOF) {
+        perror("Could not read from stdin!");
+        exit(EXIT_FAILURE);
+    }
 
     Tree *tree = create_tree(degree);
     printf("Created a tree of size %zu\n\n", degree);
@@ -304,22 +306,29 @@ int main() {
                    "\t<number> - adds the number to the tree\n"
                    "\t\"exit\" - quit\n"
                    "\t\"print\" - print the tree\n");
-    printf("Warning: Expecting integers!\n");
+    printf("Warning: Expecting integers. Long input is not remediated\n");
 
-    int value;
     char buf[BUFSIZ];
     char *p;
 
     do {
-        fgets(buf, sizeof(buf), stdin);
+        if (fgets(buf, sizeof(buf), stdin) == NULL) {
+            perror("Could not read from stdin!");
+            exit(EXIT_FAILURE);
+        }
+
         if (!strncmp(buf, "print", 5)) {
             print_tree(tree);
         } else {
-            value = (int) strtol(buf, &p, 10);
+            long value = strtol(buf, &p, 10);
+            if ((errno == ERANGE && (value == LONG_MAX || value == LONG_MIN)) || (errno != 0 && value == 0)) {
+                perror("Error during long conversion with strtol");
+                exit(EXIT_FAILURE);
+            }
 
             if (buf[0] != '\n' && (*p == '\n' || *p == '\0')) {
-                add(tree, value);
-                printf ("Added %d to the tree\n", value);
+                add(tree, (int) value);
+                printf ("Added %ld to the tree\n", value);
             }
         }
     } while (strncmp(buf, "exit", 4) != 0);
@@ -327,5 +336,5 @@ int main() {
     print_tree(tree);
     destroy_tree(tree);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
