@@ -1,15 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct node Node;
+// ### LINKED LIST ###
 
-struct node {
+
+typedef struct llnode LinkedListNode;
+
+struct llnode {
     int value;
-    Node *next;
+    LinkedListNode *next;
 };
 
-Node *create_node(int value) {
-    Node *result = malloc(sizeof(Node));
+typedef struct llist {
+    LinkedListNode *head;
+} LinkedList;
+
+LinkedListNode *create_node(int value) {
+    LinkedListNode *result = malloc(sizeof(LinkedListNode));
     if (result == NULL) {
         perror("Could not allocate memory!");
         return NULL;
@@ -21,7 +28,7 @@ Node *create_node(int value) {
     return result;
 }
 
-Node *destroy_nodes_recursively(Node *node) {
+LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
     if (node) {
         node->next = destroy_nodes_recursively(node->next);
         free(node);
@@ -29,15 +36,11 @@ Node *destroy_nodes_recursively(Node *node) {
     return NULL;
 }
 
-typedef struct list {
-    Node *head;
-} List;
-
-List *create_list() {
-    return malloc(sizeof(List));
+LinkedList *create_linked_list() {
+    return malloc(sizeof(LinkedList));
 }
 
-List *destroy_list(List *list) {
+LinkedList *destroy_linked_list(LinkedList *list) {
     if (list) {
         list->head = destroy_nodes_recursively(list->head);
         free(list);
@@ -45,8 +48,8 @@ List *destroy_list(List *list) {
     return NULL;
 }
 
-size_t size_of_(List *list) {
-    Node *head = list->head;
+size_t size_of_(LinkedList *list) {
+    LinkedListNode *head = list->head;
     size_t result = 0;
 
     while (head != NULL) {
@@ -57,7 +60,7 @@ size_t size_of_(List *list) {
     return result;
 }
 
-void insert_at_index(List *list, int value, size_t index) {
+void insert_at_index(LinkedList *list, int value, size_t index) {
 
     // Catch index out of range
     if (index > size_of_(list)) {
@@ -65,8 +68,8 @@ void insert_at_index(List *list, int value, size_t index) {
         exit(1);
     }
 
-    Node *head = list->head;
-    Node *to_insert = create_node(value);
+    LinkedListNode *head = list->head;
+    LinkedListNode *to_insert = create_node(value);
 
     // Catch append to front case
     // Else insert normally
@@ -75,7 +78,7 @@ void insert_at_index(List *list, int value, size_t index) {
         list->head = to_insert;
         return;
     } else {
-        Node *before = head;
+        LinkedListNode *before = head;
 
         for (size_t i = 0; i < index; ++i) {
             before = head;
@@ -87,12 +90,12 @@ void insert_at_index(List *list, int value, size_t index) {
     }
 }
 
-void add(List *list, int value) {
+void add(LinkedList *list, int value) {
     insert_at_index(list, value, size_of_(list));
 }
 
-void print_list(List *list) {
-    Node *head = list->head;
+void print_linked_list(LinkedList *list) {
+    LinkedListNode *head = list->head;
 
     while (head != NULL) {
         printf("%d ", head->value);
@@ -101,3 +104,61 @@ void print_list(List *list) {
 
     printf("\n");
 }
+
+int list_contains(LinkedList *list, int value) {
+    LinkedListNode *current = list->head;
+    while (current) {
+        if (current->value == value) {
+            return 1;
+        }
+        current = current->next;
+    }
+    return 0;
+}
+
+
+
+typedef struct integer_array {
+    size_t length;
+    int *elements;
+} IntegerArray;
+
+IntegerArray *create_integer_array(size_t length) {
+    IntegerArray *result = malloc(sizeof(IntegerArray));
+    if (result == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
+
+    result->elements = malloc(length * sizeof(int));
+    if (result->elements == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
+
+    result->length = length;
+
+    return result;
+}
+
+IntegerArray *destroy_integer_array(IntegerArray *integerArray) {
+    if (integerArray) {
+        free(integerArray->elements);
+        free(integerArray);
+    }
+    return NULL;
+}
+
+void print_integer_array(IntegerArray *integerArray) {
+    printf("[");
+    for (size_t i = 0; i < integerArray->length; ++i) {
+        printf("%d", integerArray->elements[i]);
+        if (i != integerArray->length - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+}
+
+
+
