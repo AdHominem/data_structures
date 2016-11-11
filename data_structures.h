@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
-/*
+/*÷
  * Contains:
  * - Linked List
  * - Integer Array
  * - Tree
+ * - Binary Tree
  */
 
 /* ### LINKED LIST ### */
@@ -305,7 +306,7 @@ void print_tree_node_keys(TreeNode *node) {
 
 // Checks in which child tree_node the value may fit, or if it fits inside the key array.
 // Will create a new child tree_node if necessary.
-void add_internal(TreeNode *node, int value) {
+void add_to_tree_internal(TreeNode *node, int value) {
 
     if (!node) {
         return;
@@ -317,7 +318,7 @@ void add_internal(TreeNode *node, int value) {
             //printf("It seems %d is smaller than %d, will be inserted into my left child!\n", value, tree_node->keys->elements[i]);
             if (node->children->elements[i] != NULL) {
                 //printf("\tSince I have a left child, I'm going to insert there\n");
-                add_internal(node->children->elements[i], value);
+                add_to_tree_internal(node->children->elements[i], value);
                 return;
             } else {
                 //printf("\tSeems I don't have a left child yet, creating one!\n");
@@ -335,7 +336,7 @@ void add_internal(TreeNode *node, int value) {
             //printf("It seems %d is bigger than %d, will be inserted into my right child!\n", value, tree_node->keys->elements[i]);
             if (node->children->elements[i + 1] != NULL) {
                 //printf("\tSince I have a right child, I'm going to insert there\n");
-                add_internal(node->children->elements[i + 1], value);
+                add_to_tree_internal(node->children->elements[i + 1], value);
                 return;
             } else {
                 //printf("\tSeems I don't have a right child yet, creating one!\n");
@@ -355,7 +356,7 @@ void add_to_tree(Tree *tree, int value) {
         tree->root->keys->elements[0] = value;
         tree->root->last_key_index = 1;
     } else {
-        add_internal(tree->root, value);
+        add_to_tree_internal(tree->root, value);
     }
 }
 
@@ -415,4 +416,286 @@ TreeNode *search_in_tree_internal(TreeNode *node, int value) {
 // Returns a pointer to the containing TreeNode or NULL, if value not in graph
 TreeNode *search_in_tree(Tree *tree, int value) {
     return search_in_tree_internal(tree->root, value);
+}
+
+
+/* ### BINARY TREE ###
+ *
+ * This is separate from Tree since it includes tracking the parent element and removal
+ *
+ * */
+
+
+// DATA STRUCTURES
+
+typedef struct binary_tree_node BinaryTreeNode;
+
+struct binary_tree_node {
+    int value;
+    BinaryTreeNode *left;
+    BinaryTreeNode *right;
+    BinaryTreeNode *parent;
+};
+
+typedef struct binary_tree {
+    BinaryTreeNode *root;
+} BinaryTree;
+
+// CONSTRUCTORS AND DESTRUCTORS
+
+BinaryTreeNode *create_binary_tree_node(int value) {
+
+    BinaryTreeNode *result = malloc(sizeof(BinaryTreeNode));
+    if (result == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
+
+    result->left = NULL;
+    result->right = NULL;
+    result->parent = NULL;
+    result->value = value;
+
+    return result;
+}
+
+BinaryTreeNode *destroy_binary_tree_node(BinaryTreeNode *node) {
+    if (node) {
+        if (node->parent) {
+            if (node->parent->left == node) {
+                node->parent->left = NULL;
+            } else {
+                node->parent->right = NULL;
+            }
+        }
+    }
+    free(node);
+    return NULL;
+}
+
+BinaryTreeNode *destroy_binary_tree_nodes_recursively(BinaryTreeNode *node) {
+    if (node) {
+        node->left = destroy_binary_tree_nodes_recursively(node->left);
+        node->right = destroy_binary_tree_nodes_recursively(node->right);
+    }
+    free(node);
+    return NULL;
+}
+
+BinaryTree *create_binary_tree() {
+
+    BinaryTree *result = malloc(sizeof(BinaryTree));
+    if (result == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
+
+    result->root = NULL;
+    return result;
+}
+
+BinaryTree *destroy_binary_tree(BinaryTree *tree) {
+    if (tree) {
+        tree->root = destroy_binary_tree_nodes_recursively(tree->root);
+    }
+    free(tree);
+    return NULL;
+}
+
+// FUNCTIONS
+
+// Checks in which child node the value may fit, or if it fits inside the key array.
+// Will create a new child node if necessary.
+void add_to_binary_tree_internal(BinaryTreeNode *node, int value) {
+
+    if (node) {
+        if (node->value >= value) {
+            if (node->left) {
+                add_to_binary_tree_internal(node->left, value);
+            } else {
+                node->left = create_binary_tree_node(value);
+                node->left->parent = node;
+            }
+        } else {
+            if (node->right) {
+                add_to_binary_tree_internal(node->right, value);
+            } else {
+                node->right = create_binary_tree_node(value);
+                node->right->parent = node;
+            }
+        }
+    }
+}
+
+// Adds a new value to the tree and creates a root node if the tree is empty
+void add_to_binary_tree(BinaryTree *tree, int value) {
+    if (tree->root == NULL) {
+        tree->root = create_binary_tree_node(value);
+    } else {
+        add_to_binary_tree_internal(tree->root, value);
+    }
+}
+
+// Prints all the nodes recursively, indenting them for better readability
+void print_binary_tree_nodes(BinaryTreeNode *node, size_t depth){
+    if (node) {
+        if (node->left) {
+            print_binary_tree_nodes(node->left, depth + 1);
+        }
+
+        for (size_t indentations = 1; indentations < depth; indentations++) {
+            printf("\t");
+        }
+
+        printf("%d\n", node->value);
+
+        if (node->right) {
+            print_binary_tree_nodes(node->right, depth + 1);
+        }
+    }
+}
+
+void print_binary_tree(BinaryTree *tree) {
+    print_binary_tree_nodes(tree->root, 1);
+    printf("\n");
+}
+
+BinaryTreeNode *search_in_binary_tree_internal(BinaryTreeNode *node, int value) {
+
+    if (node) {
+        if (node->value == value) {
+            return node;
+        } else if (value < node->value) {
+            return search_in_binary_tree_internal(node->left, value);
+        } else {
+            return search_in_binary_tree_internal(node->right, value);
+        }
+    }
+    return NULL;
+}
+
+// Returns a pointer to the containing BinaryTreeNode or NULL, if value not in graph
+BinaryTreeNode *search_in_binary_tree(BinaryTree *tree, int value) {
+    return search_in_binary_tree_internal(tree->root, value);
+}
+
+BinaryTreeNode *rightmost_node_of_(BinaryTreeNode *node) {
+    return node->right ? rightmost_node_of_(node->right) : node;
+}
+
+BinaryTreeNode *leftmost_node_of_(BinaryTreeNode *node) {
+    return node->left ? leftmost_node_of_(node->left) : node;
+}
+
+void delete_binary_tree_node_internal(BinaryTreeNode *node, int value) {
+    BinaryTreeNode *target = search_in_binary_tree_internal(node, value);
+    BinaryTreeNode *replacement;
+    if (target) {
+        if (!target->left && !target->right) {
+            destroy_binary_tree_node(target);
+            return;
+        } else {
+            replacement = target->left ? rightmost_node_of_(target->left) : leftmost_node_of_(target->right);
+        }
+        if (!replacement->right && !replacement->left) {
+            target->value = replacement->value;
+            destroy_binary_tree_node(replacement);
+        } else {
+            target->value = replacement->value;
+            delete_binary_tree_node_internal(replacement, replacement->value);
+        }
+    }
+}
+
+void delete_binary_tree_node(BinaryTree *tree, int value) {
+    delete_binary_tree_node_internal(tree->root, value);
+}
+
+
+/*
+ * ADJACENCY LIST
+ *
+ * This specific data structure creates adjacency lists of fixed size
+ * TODO: Make it accept an arbitrary size
+ */
+
+
+// DATA STRUCTURES
+
+#define NODES_COUNT 20
+
+typedef struct alnode AdjacencyListNode;
+
+// An adjacency node contains a value and a dynamic list with its predecessors
+struct alnode {
+    int value;
+    LinkedList *successors;
+};
+
+typedef struct alist {
+    AdjacencyListNode *nodes[NODES_COUNT];
+} AdjacencyList;
+
+// CONSTRUCTORS AND DESTRUCTORS
+
+AdjacencyListNode *create_alnode(int value) {
+
+    AdjacencyListNode *result = malloc(sizeof(AdjacencyListNode));
+    if (result == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
+
+    result->value = value;
+    result->successors = create_linked_list();
+
+    return result;
+}
+
+AdjacencyListNode *destroy_alnode(AdjacencyListNode *node) {
+    if (node) {
+        node->successors = destroy_linked_list(node->successors);
+    }
+    free(node);
+    return NULL;
+}
+
+// This adjacency list comes pre initialized with nodes of value 0-19
+AdjacencyList *create_alist() {
+    AdjacencyList *result = malloc(sizeof(AdjacencyList));
+    if (result == NULL) {
+        return NULL;
+    }
+
+    for (int i = 0; i < NODES_COUNT; ++i) {
+        result->nodes[i] = create_alnode(i);
+    }
+
+    return result;
+}
+
+AdjacencyList *destroy_alist(AdjacencyList *list) {
+    if (list) {
+        for (int i = 0; i < NODES_COUNT; ++i) {
+            list->nodes[i] = destroy_alnode(list->nodes[i]);
+        }
+    }
+    free(list);
+    return NULL;
+}
+
+// FUNCTIONS
+
+void link_alnodes(AdjacencyListNode *from, AdjacencyListNode *to) {
+    if (from && to && !linked_list_contains(from->successors, to->value)) {
+        add_to_linked_list(from->successors, to->value);
+    }
+}
+
+void print_alist(AdjacencyList *list) {
+    for (int i = 0; i < NODES_COUNT; ++i) {
+        printf("%d: ", i);
+        print_linked_list(list->nodes[i]->successors);
+    }
+    printf("\n");
 }
