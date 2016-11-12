@@ -26,9 +26,13 @@ Input *destroy_input(Input *input) {
 
 char **get_tokens(Input *input) {
 
-    // Get the line
+    // Get the line, handle FIO37-C
     char line[BUFSIZ];
-    fgets(line, sizeof(line), stdin);
+    if (fgets(line, sizeof(line), stdin) == NULL) {
+        perror("Could not read from stdin!");
+        exit(EXIT_FAILURE);
+    }
+
     printf("%s", line);
 
     // Get the tokens
