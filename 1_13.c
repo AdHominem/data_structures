@@ -1,5 +1,7 @@
 #include "input.h"
 #include "data_structures.h"
+#include <stdbool.h>
+
 
 int main() {
 
@@ -25,27 +27,24 @@ int main() {
                    "\t\"print\" - print the tree\n");
 
     char buf[BUFSIZ];
-    char **tokens = malloc(sizeof(char*));
+    char *tokens;
     int value;
 
-    while (TRUE) {
+    while (true) {
 
-        prompt_for_tokens(buf, tokens, 1);
+        prompt_for_tokens(buf, &tokens, 1);
 
-        if (!strcmp(tokens[0], "exit")) {
+        if (!strcmp(tokens, "exit")) {
             break;
         }
-        else if (!strcmp(tokens[0], "print")) {
+        else if (!strcmp(tokens, "print")) {
             print_tree(tree);
         }
-        else if (!string_to_integer(tokens[0], &value)) {
+        else if (!string_to_integer(tokens, &value)) {
             add_to_tree(tree, value);
             printf ("Added %d to the tree\n", value);
         }
     }
 
-    free(tokens);
     destroy_tree(tree);
-
-    return EXIT_SUCCESS;
 }

@@ -1,5 +1,7 @@
 #include "input.h"
 #include "data_structures.h"
+#include <stdbool.h>
+
 
 int main() {
 
@@ -22,7 +24,7 @@ int main() {
     char buf[BUFSIZ];
     char **tokens = malloc(2 * sizeof(char*));
 
-    while (TRUE) {
+    while (true) {
 
         get_line(buf, BUFSIZ);
         get_tokens_optional(buf, tokens, 2);

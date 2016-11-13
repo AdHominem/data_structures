@@ -48,6 +48,4 @@ int main() {
     print_alist(graph);
     destroy_alist(graph);
     print_matrix(matrix);
-
-    return 0;
 }

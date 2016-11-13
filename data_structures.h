@@ -590,12 +590,12 @@ BinaryTreeNode *leftmost_node_of_(BinaryTreeNode *node) {
 int delete_binary_tree_node_internal(BinaryTreeNode *node, int value) {
     BinaryTreeNode *target = search_in_binary_tree_internal(node, value);
     if (target == NULL) {
-        return EXIT_FAILURE;
+        return 1;
     } else {
         BinaryTreeNode *replacement;
         if (!target->left && !target->right) {
             destroy_binary_tree_node(target);
-            return EXIT_SUCCESS;
+            return 0;
         } else {
             replacement = target->left ? rightmost_node_of_(target->left) : leftmost_node_of_(target->right);
         }
@@ -606,7 +606,7 @@ int delete_binary_tree_node_internal(BinaryTreeNode *node, int value) {
             target->value = replacement->value;
             delete_binary_tree_node_internal(replacement, replacement->value);
         }
-        return EXIT_SUCCESS;
+        return 0;
     }
 }
 

@@ -1,12 +1,9 @@
-#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
-
-#define TRUE 1
-
+#include <stdlib.h>
 
 /*
  * Contains functions for input related operations
@@ -23,8 +20,8 @@ void get_line(char *line, const int length) {
             *newline = '\0';
         }
     } else {
-        fprintf(stderr, "Could not read line from stdin!");
-        exit(EXIT_FAILURE);
+        //fprintf(stderr, "Could not read line from stdin!");
+        exit(1);
     }
 }
 
@@ -33,7 +30,7 @@ void get_line(char *line, const int length) {
 /// function will alter the line parameter, so be sure to pass a copy if you want to preserve it.
 /// \param line - The string to be processed
 /// \param tokens - The buffer holding the tokens
-/// \return EXIT_FAILURE if the supplied line does not contain enough tokens.
+/// \return 1 if the supplied line does not contain enough tokens.
 int get_tokens(char *line, char **tokens, const size_t number_of_tokens) {
     for (size_t i = 0; i < number_of_tokens; ++i) {
         char *token = strtok(line, " ");
@@ -43,10 +40,10 @@ int get_tokens(char *line, char **tokens, const size_t number_of_tokens) {
         } else {
             // If token is NULL that means not enough tokens found
             //fprintf(stderr, "Not enough tokens!\n");
-            return EXIT_FAILURE;
+            return 1;
         }
     }
-    return EXIT_SUCCESS;
+    return 0;
 }
 
 
@@ -67,8 +64,8 @@ void get_tokens_optional(char *line, char **tokens, const size_t number_of_token
 /// Not using atoi() since it can't detect errors (ERR34-C)
 /// \param string - The string to be interpreted
 /// \param integer - A pointer to the returned int value
-/// \return EXIT_FAILURE if the string value is out of range or some error occurs
-int string_to_integer(char *string, int *integer) {
+/// \return 1 if the string value is out of range or some error occurs
+int string_to_integer(const char *string, int *integer) {
     char *p;
     const long value = strtol(string, &p, 10);
 
@@ -77,24 +74,24 @@ int string_to_integer(char *string, int *integer) {
     } else if (*p != '\0') {
         fprintf(stderr, "%s has extra characters at end of input: %s\n", string, p);
     } else if ((LONG_MIN == value || LONG_MAX == value) && ERANGE == errno) {
-        fprintf(stderr, "%s is out of range of type int\n", string);
+        fprintf(stderr, "%s is far too big\n", string);
     } else if (value > INT_MAX) {
-        fprintf(stderr, "%ld is greater than INT_MAX\n", value);
+        fprintf(stderr, "%ld is too big\n", value);
     } else if (value < INT_MIN) {
-        fprintf(stderr, "%ld is less than INT_MIN\n", value);
+        fprintf(stderr, "%ld is too small\n", value);
     } else {
         *integer = (int) value;
-        return EXIT_SUCCESS;
+        return 0;
     }
-    return EXIT_FAILURE;
+    return 1;
 }
 
 
 /// Converts a string to a size_t
 /// \param string - The string to be interpreted
 /// \param size_t - A pointer to the returned size_t value
-/// \return EXIT_FAILURE if the string value is out of range or some error occurs
-int string_to_size_t(char *string, size_t *size) {
+/// \return 1 if the string value is out of range or some error occurs
+int string_to_size_t(const char *string, size_t *size) {
     char *p;
     const long value = strtol(string, &p, 10);
 
@@ -103,68 +100,67 @@ int string_to_size_t(char *string, size_t *size) {
     } else if (*p != '\0') {
         fprintf(stderr, "%s has extra characters at end of input: %s\n", string, p);
     } else if ((LONG_MIN == value || LONG_MAX == value) && ERANGE == errno) {
-        fprintf(stderr, "%s is out of range of type size_t\n", string);
+        fprintf(stderr, "%s is far too big\n", string);
     } else if (value < 0) {
         fprintf(stderr, "%ld is less than 0\n", value);
     } else if ((size_t) value > SIZE_MAX) {
-        fprintf(stderr, "%ld is greater than SIZE_MAX\n", value);
+        fprintf(stderr, "%ld is too big\n", value);
     } else {
         *size = (size_t) value;
-        return EXIT_SUCCESS;
+        return 0;
     }
-    return EXIT_FAILURE;
+    return 1;
 }
 
 
 /// Prompts for an integer value once
 /// \param value - A pointer to the integer
-/// \return EXIT_FAILURE if the supplied input doesn't match
+/// \return 1 if the supplied input doesn't match
 int get_integer(int *value) {
     char buffer[BUFSIZ];
     get_line(buffer, BUFSIZ);
 
-    char **tokens = malloc(sizeof(char*));
-    if (get_tokens(buffer, tokens, 1)) {
-        return EXIT_FAILURE;
+    char *tokens;
+    if (get_tokens(buffer, &tokens, 1)) {
+        return 1;
     }
 
     int result;
-    if (string_to_integer(tokens[0], &result)) {
-        return EXIT_FAILURE;
+    if (string_to_integer(tokens, &result)) {
+        return 2;
     }
 
     *value = result;
-    free(tokens);
-    return EXIT_SUCCESS;
+    return 0;
 }
 
 
 /// Prompts for a size_t value once
 /// \param value - A pointer to the size_t
-/// \return EXIT_FAILURE if the supplied input doesn't match
+/// \return 1 if the supplied input doesn't match
 int get_size_t(size_t *value) {
     char buffer[BUFSIZ];
     get_line(buffer, BUFSIZ);
 
-    char **tokens = malloc(sizeof(char*));
-    if (get_tokens(buffer, tokens, 1)) {
-        return EXIT_FAILURE;
+    char *tokens;
+    if (get_tokens(buffer, &tokens, 1)) {
+        return 1;
     }
 
     size_t result;
-    if (string_to_size_t(tokens[0], &result)) {
-        return EXIT_FAILURE;
+    if (string_to_size_t(tokens, &result)) {
+        return 2;
     }
 
     *value = result;
-    free(tokens);
-    return EXIT_SUCCESS;
+    return 0;
 }
 
 
 /// Prompts for a size_t until a valid value has been entered
 /// \return The size_t value
 size_t prompt_for_size_t() {
+    printf("Enter a valid non negative integer: ");
     size_t result;
     while (get_size_t(&result));
     return result;
@@ -174,6 +170,7 @@ size_t prompt_for_size_t() {
 /// Prompts for an integer until a valid value has been entered
 /// \return The int value
 int prompt_for_int() {
+    printf("Enter a valid integer: ");
     int result;
     while (get_integer(&result));
     return result;
