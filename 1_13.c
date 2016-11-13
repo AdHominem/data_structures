@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <errno.h>
 #include "data_structures.h"
+#include "input.h"
 
 int main() {
 
@@ -15,10 +16,7 @@ int main() {
                    "Enter degree: \n");
 
     size_t degree;
-    if (scanf("%zu", &degree) == EOF) {
-        perror("Could not read from stdin!");
-        exit(EXIT_FAILURE);
-    }
+    get_size_t(&degree);
 
     Tree *tree = create_tree(degree);
     printf("Created a tree of size %zu\n\n", degree);
@@ -41,12 +39,15 @@ int main() {
             print_tree(tree);
         } else {
             long value = strtol(buf, &p, 10);
-            if ((errno == ERANGE && (value == LONG_MAX || value == LONG_MIN)) || (errno != 0 && value == 0)) {
+            if ((errno == ERANGE && (value == LONG_MAX || value == LONG_MIN))) {
+                printf("Value out of range!");
+                exit(EXIT_FAILURE);
+            }
+            else if (errno != 0 && value == 0) {
                 perror("Error during long conversion with strtol");
                 exit(EXIT_FAILURE);
             }
-
-            if (buf[0] != '\n' && (*p == '\n' || *p == '\0')) {
+            else if (buf[0] != '\n' && (*p == '\n' || *p == '\0')) {
                 add_to_tree(tree, (int) value);
                 printf ("Added %ld to the tree\n", value);
             }

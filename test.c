@@ -1,21 +1,29 @@
-
-
-
 #include <stdio.h>
-#include <stdlib.h>
-#include <memory.h>
+#include "input.h"
 
 int main() {
-    char line[BUFSIZ];
-    if (fgets(line, sizeof(line), stdin) == NULL) {
-        perror("Could not read from stdin!");
-        exit(EXIT_FAILURE);
-    }
-    line[strlen(line) - 1] = '\0';
 
-    printf("%s", line);
+    // this will also be the buffer length for the tokens
+    const size_t line_length = 10;
+    char line[line_length];
+    get_line(line, line_length);
 
-    for (size_t i = 0; i < strlen(line); ++i) {
-        printf("%x ", line[i]);
+    const size_t tokens_wanted = 2;
+    char **tokens = malloc(tokens_wanted * sizeof(char*));
+    if (tokens == NULL) {
+        perror("Could not allocate memory!");
+        return EXIT_FAILURE;
     }
+
+    if (get_tokens(line, tokens, tokens_wanted)) {
+        return EXIT_FAILURE;
+    }
+
+    for (size_t i = 0; i < tokens_wanted; ++i) {
+        printf("Found token: %s\n", tokens[i]);
+        int value;
+        get_integer(tokens[i], &value);
+    }
+    free(tokens);
 }
+
