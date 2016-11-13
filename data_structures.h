@@ -507,8 +507,10 @@ BinaryTree *destroy_binary_tree(BinaryTree *tree) {
 
 // FUNCTIONS
 
-// Checks in which child node the value may fit, or if it fits inside the key array.
-// Will create a new child node if necessary.
+/// Checks in which child node the value may fit, or if it fits inside the key array.
+/// Will create a new child node if necessary.
+/// \param node The node at which the insertion starts
+/// \param value The value to insert
 void add_to_binary_tree_internal(BinaryTreeNode *node, int value) {
 
     if (node) {
@@ -530,7 +532,9 @@ void add_to_binary_tree_internal(BinaryTreeNode *node, int value) {
     }
 }
 
-// Adds a new value to the tree and creates a root node if the tree is empty
+/// Adds a new value to the tree and creates a root node if the tree is empty
+/// \param tree The tree to extend
+/// \param value The value to insert
 void add_to_binary_tree(BinaryTree *tree, int value) {
     if (tree->root == NULL) {
         tree->root = create_binary_tree_node(value);
@@ -539,7 +543,9 @@ void add_to_binary_tree(BinaryTree *tree, int value) {
     }
 }
 
-// Prints all the nodes recursively, indenting them for better readability
+/// Prints all the nodes recursively, indenting them for better readability
+/// \param node The subtree which is printed
+/// \param depth The depth of indentation. This parameter is used in recursion and should remain 1
 void print_binary_tree_nodes(BinaryTreeNode *node, size_t depth){
     if (node) {
         if (node->left) {
@@ -558,11 +564,17 @@ void print_binary_tree_nodes(BinaryTreeNode *node, size_t depth){
     }
 }
 
+/// Prints all the nodes of the tree recursively, indenting them for better readability
+/// \param tree The tree to print
 void print_binary_tree(BinaryTree *tree) {
     print_binary_tree_nodes(tree->root, 1);
     printf("\n");
 }
 
+/// Searches a value inside a subtree and fetches the respective node if found
+/// \param node The subtree to search in
+/// \param value The value to search
+/// \return A pointer to the containing BinaryTreeNode or NULL, if the subtree doesn't contain the value
 BinaryTreeNode *search_in_binary_tree_internal(BinaryTreeNode *node, int value) {
 
     if (node) {
@@ -577,7 +589,10 @@ BinaryTreeNode *search_in_binary_tree_internal(BinaryTreeNode *node, int value) 
     return NULL;
 }
 
-// Returns a pointer to the containing BinaryTreeNode or NULL, if value not in graph
+/// Searches a value inside a tree and fetches the respective node if found
+/// \param tree The tree to search in
+/// \param value The value to search
+/// \return A pointer to the containing BinaryTreeNode or NULL, if the tree doesn't contain the value
 BinaryTreeNode *search_in_binary_tree(BinaryTree *tree, int value) {
     return search_in_binary_tree_internal(tree->root, value);
 }
@@ -632,7 +647,7 @@ int delete_binary_tree_node(BinaryTree *tree, int value) {
 
 typedef struct alnode AdjacencyListNode;
 
-// An adjacency node contains a value and a dynamic list with its predecessors
+/// An adjacency node contains a value and a dynamic list with its predecessors
 struct alnode {
     int value;
     LinkedList *successors;
