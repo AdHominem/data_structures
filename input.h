@@ -81,6 +81,7 @@ int string_to_integer(char *string, int *integer) {
     return EXIT_FAILURE;
 }
 
+
 /// Converts a string to a size_t
 /// \param string - The string to be interpreted
 /// \param size_t - A pointer to the returned size_t value
@@ -106,6 +107,7 @@ int string_to_size_t(char *string, size_t *size) {
     return EXIT_FAILURE;
 }
 
+
 /// Prompts for an integer value once
 /// \param value - A pointer to the integer
 /// \return EXIT_FAILURE if the supplied input doesn't match
@@ -127,6 +129,7 @@ int get_integer(int *value) {
     free(tokens);
     return EXIT_SUCCESS;
 }
+
 
 /// Prompts for a size_t value once
 /// \param value - A pointer to the size_t
@@ -150,6 +153,7 @@ int get_size_t(size_t *value) {
     return EXIT_SUCCESS;
 }
 
+
 /// Prompts for a size_t until a valid value has been entered
 /// \return The size_t value
 size_t prompt_for_size_t() {
@@ -157,6 +161,7 @@ size_t prompt_for_size_t() {
     while (get_size_t(&result));
     return result;
 }
+
 
 /// Prompts for an integer until a valid value has been entered
 /// \return The int value
