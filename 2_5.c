@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include <time.h>
 #include "data_structures.h"
 

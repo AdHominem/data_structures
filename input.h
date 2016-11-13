@@ -3,6 +3,14 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
+#include <stdio.h>
+
+#define TRUE 1
+
+
+/*
+ * Contains functions for input related operations
+ */
 
 
 /// Wraps fgets to handle errors and safely replaces the newline

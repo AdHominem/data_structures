@@ -1,15 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <memory.h>
-#include <limits.h>
-#include <errno.h>
-#include <ncurses.h>
-#include "data_structures.h"
 #include "input.h"
+#include "data_structures.h"
 
 int main() {
 
-    printf("########################\n"
+    printf(        "########################\n"
                    "# N-Ary Tree Simulator #\n"
                    "########################\n\n"
                    "Enter degree: \n");
