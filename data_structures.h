@@ -587,13 +587,15 @@ BinaryTreeNode *leftmost_node_of_(BinaryTreeNode *node) {
     return node->left ? leftmost_node_of_(node->left) : node;
 }
 
-void delete_binary_tree_node_internal(BinaryTreeNode *node, int value) {
+int delete_binary_tree_node_internal(BinaryTreeNode *node, int value) {
     BinaryTreeNode *target = search_in_binary_tree_internal(node, value);
-    BinaryTreeNode *replacement;
-    if (target) {
+    if (target == NULL) {
+        return EXIT_FAILURE;
+    } else {
+        BinaryTreeNode *replacement;
         if (!target->left && !target->right) {
             destroy_binary_tree_node(target);
-            return;
+            return EXIT_SUCCESS;
         } else {
             replacement = target->left ? rightmost_node_of_(target->left) : leftmost_node_of_(target->right);
         }
@@ -604,11 +606,12 @@ void delete_binary_tree_node_internal(BinaryTreeNode *node, int value) {
             target->value = replacement->value;
             delete_binary_tree_node_internal(replacement, replacement->value);
         }
+        return EXIT_SUCCESS;
     }
 }
 
-void delete_binary_tree_node(BinaryTree *tree, int value) {
-    delete_binary_tree_node_internal(tree->root, value);
+int delete_binary_tree_node(BinaryTree *tree, int value) {
+    return delete_binary_tree_node_internal(tree->root, value);
 }
 
 

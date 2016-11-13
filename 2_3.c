@@ -2,7 +2,9 @@
 #include <stdio.h>
 #include <memory.h>
 #include <time.h>
+#include <ncurses.h>
 #include "data_structures.h"
+#include "input.h"
 
 // TESTING
 
@@ -51,43 +53,50 @@ int main() {
 
 
     BinaryTree *tree = create_binary_tree();
-    printf("Created a binary binary_tree\n\n");
+    printf("Created a binary tree\n\n");
+
     printf("Commands: \n"
                    "\t+ <number> - adds the number to the tree\n"
                    "\t- <number> - removes the number from the tree\n"
                    "\t\"exit\" - quit\n"
                    "\t\"print\" - print the tree\n");
-    printf("Warning: Expecting integers!\n");
 
     int value;
     char buf[BUFSIZ];
-    char *p;
+    char **tokens = malloc(2 * sizeof(char*));
 
-    do {
-        fgets(buf, sizeof(buf), stdin);
-        if (!strncmp(buf, "print", 5)) {
-            print_binary_tree(tree);
-        } else if (buf[1] == ' ' && (buf[0] == '-' || buf[0] == '+')) {
-            char number[BUFSIZ];
-            memmove(number, buf + 2, strlen(buf));
-            value = (int) strtol(number, &p, 10);
+    while (TRUE) {
 
-            if (*p == '\n' || *p == '\0') {
-                if (buf[0] == '+') {
-                    add_to_binary_tree(tree, value);
-                    printf ("Added %d to the tree\n", value);
-                } else if (buf[0] == '-') {
-                    delete_binary_tree_node(tree, value);
-                    printf ("Removed %d from the tree\n", value);
-                }
-            } else {
-                printf ("Invalid number entered\n");
+        get_line(buf, BUFSIZ);
+        get_tokens_optional(buf, tokens, 2);
+        int one_token_entered = tokens[0] && !tokens[1];
+        int two_tokens_entered = tokens[0] && tokens[1];
+
+        if (one_token_entered) {
+            if (!strcmp(tokens[0], "exit")) {
+                break;
+            }
+            else if (!strcmp(tokens[0], "print")) {
+                print_binary_tree(tree);
             }
         }
-    } while (strncmp(buf, "exit", 4) != 0);
+        else if (two_tokens_entered) {
+            if (!string_to_integer(tokens[1], &value)) {
+                if (!strcmp(tokens[0], "+")) {
+                    add_to_binary_tree(tree, value);
+                    printf ("Added %d to the tree\n", value);
+                }
+                else if (!strcmp(tokens[0], "-")) {
+                    if (!delete_binary_tree_node(tree, value)) {
+                        printf ("Removed %d from the tree\n", value);
+                    } else {
+                        printf("%d is not in the tree!\n", value);
+                    }
+                }
+            }
+        }
+    }
 
-    print_binary_tree(tree);
+    free(tokens);
     destroy_binary_tree(tree);
-
-    return 0;
 }

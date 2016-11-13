@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <limits.h>
 #include <errno.h>
+#include <ncurses.h>
 #include "data_structures.h"
 #include "input.h"
 
@@ -11,50 +12,45 @@ int main() {
     printf("########################\n"
                    "# N-Ary Tree Simulator #\n"
                    "########################\n\n"
-                   "Warning: Expecting integers > 2. \n"
-                   "Wrong input will lead to undefined behavior!\n\n"
                    "Enter degree: \n");
 
     size_t degree;
-    get_size_t(&degree);
+    do {
+        get_size_t(&degree);
+        if (degree < 2) {
+            fprintf(stderr, "Degree must be a valid size_t >= 2\n");
+        }
+    } while (degree < 2);
 
     Tree *tree = create_tree(degree);
-    printf("Created a tree of size %zu\n\n", degree);
+    printf("Created a tree of degree %zu\n\n", degree);
+
     printf("Commands: \n"
                    "\t<number> - adds the number to the tree\n"
                    "\t\"exit\" - quit\n"
                    "\t\"print\" - print the tree\n");
-    printf("Warning: Expecting integers. Long input is not remediated\n");
 
     char buf[BUFSIZ];
-    char *p;
+    char **tokens = malloc(sizeof(char*));
+    int value;
 
-    do {
-        if (fgets(buf, sizeof(buf), stdin) == NULL) {
-            perror("Could not read from stdin!");
-            exit(EXIT_FAILURE);
+    while (TRUE) {
+
+        prompt_for_tokens(buf, tokens, 1);
+
+        if (!strcmp(tokens[0], "exit")) {
+            break;
         }
-
-        if (!strncmp(buf, "print", 5)) {
+        else if (!strcmp(tokens[0], "print")) {
             print_tree(tree);
-        } else {
-            long value = strtol(buf, &p, 10);
-            if ((errno == ERANGE && (value == LONG_MAX || value == LONG_MIN))) {
-                printf("Value out of range!");
-                exit(EXIT_FAILURE);
-            }
-            else if (errno != 0 && value == 0) {
-                perror("Error during long conversion with strtol");
-                exit(EXIT_FAILURE);
-            }
-            else if (buf[0] != '\n' && (*p == '\n' || *p == '\0')) {
-                add_to_tree(tree, (int) value);
-                printf ("Added %ld to the tree\n", value);
-            }
         }
-    } while (strncmp(buf, "exit", 4) != 0);
+        else if (!string_to_integer(tokens[0], &value)) {
+            add_to_tree(tree, value);
+            printf ("Added %d to the tree\n", value);
+        }
+    }
 
-    print_tree(tree);
+    free(tokens);
     destroy_tree(tree);
 
     return EXIT_SUCCESS;
