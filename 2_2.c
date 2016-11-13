@@ -22,9 +22,9 @@ int main() {
     printf("Created a tree of degree %zu\n\n", degree);
 
     printf("Commands: \n"
-                   "\t<number> - adds the number to the tree\n"
-                   "\t\"exit\" - quit\n"
-                   "\t\"print\" - print the tree\n");
+                   "\t<number> - Adds the number to the tree\n"
+                   "\t<x> / <exit> - Exit\n"
+                   "\t<p> / <print> - Print the tree\n");
 
     char buf[BUFSIZ];
     char *tokens;
@@ -34,10 +34,10 @@ int main() {
 
         prompt_for_tokens(buf, &tokens, 1);
 
-        if (!strcmp(tokens, "exit")) {
+        if (!strcmp(tokens, "exit") || !strcmp(tokens, "x")) {
             break;
         }
-        else if (!strcmp(tokens, "print")) {
+        else if (!strcmp(tokens, "print") || !strcmp(tokens, "p")) {
             print_tree(tree);
         }
         else if (!string_to_integer(tokens, &value)) {
