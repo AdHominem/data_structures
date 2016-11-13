@@ -183,7 +183,7 @@ int prompt_for_int() {
 /// Prompts for at least number_of_tokens tokens until valid tokens have been entered
 /// \param line - The buffer which holds the string
 /// \param tokens - The buffer holding the tokens
-void prompt_for_tokens(char *line, char**tokens, const size_t number_of_tokens) {
+void prompt_for_tokens(char *line, char **tokens, const size_t number_of_tokens) {
     do {
         get_line(line, BUFSIZ);
     } while (get_tokens(line, tokens, number_of_tokens));
