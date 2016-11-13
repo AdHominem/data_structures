@@ -1,3 +1,6 @@
+#ifndef INPUT_H
+#define INPUT_H
+
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
@@ -185,3 +188,5 @@ void prompt_for_tokens(char *line, char**tokens, const size_t number_of_tokens) 
         get_line(line, BUFSIZ);
     } while (get_tokens(line, tokens, number_of_tokens));
 }
+
+#endif

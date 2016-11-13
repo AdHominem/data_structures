@@ -1,8 +1,11 @@
+#ifndef DATA_STRUCTURES_H
+#define DATA_STRUCTURES_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
-/*÷
+/*
  * Contains:
  * - Linked List
  * - Integer Array
@@ -702,3 +705,5 @@ void print_alist(AdjacencyList *list) {
     }
     printf("\n");
 }
+
+#endif
