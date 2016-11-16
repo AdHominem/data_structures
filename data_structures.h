@@ -158,7 +158,7 @@ IntegerArray *create_integer_array(size_t length) {
         return NULL;
     }
 
-    result->elements = malloc(length * sizeof(int));
+    result->elements = calloc(length, sizeof(int));
     if (result->elements == NULL) {
         perror("Could not allocate memory!");
         return NULL;
@@ -222,7 +222,7 @@ TreeNodeArray *create_node_array(size_t length) {
         return NULL;
     }
 
-    result->elements = malloc(length * sizeof(TreeNode));
+    result->elements = calloc(length, sizeof(TreeNode));
     if (result->elements == NULL) {
         perror("Could not allocate memory!");
         return NULL;
@@ -317,25 +317,28 @@ void add_to_tree_internal(TreeNode *node, int value) {
 
     for (size_t i = 0; i < node->degree - 1; i++) {
 
-        if (node->keys->elements[i] >= value) {
+        if (i == node->last_key_index) {
+            //printf("It seems %d might fit into my key array!\n", value);
+            node->keys->elements[i] = value;
+            node->last_key_index += 1;
+            return;
+        }
+        else if (node->keys->elements[i] >= value) {
             //printf("It seems %d is smaller than %d, will be inserted into my left child!\n", value, tree_node->keys->elements[i]);
             if (node->children->elements[i] != NULL) {
                 //printf("\tSince I have a left child, I'm going to insert there\n");
                 add_to_tree_internal(node->children->elements[i], value);
                 return;
-            } else {
+            }
+            else {
                 //printf("\tSeems I don't have a left child yet, creating one!\n");
                 node->children->elements[i] = create_tree_node(node->degree);
                 node->children->elements[i]->keys->elements[0] = value;
                 node->children->elements[i]->last_key_index += 1;
                 return;
             }
-        } else if (i == node->last_key_index) {
-            //printf("It seems %d might fit into my key array!\n", value);
-            node->keys->elements[i] = value;
-            node->last_key_index += 1;
-            return;
-        } else if (i == node->degree - 2){
+        }
+        else if (i == node->degree - 2){
             //printf("It seems %d is bigger than %d, will be inserted into my right child!\n", value, tree_node->keys->elements[i]);
             if (node->children->elements[i + 1] != NULL) {
                 //printf("\tSince I have a right child, I'm going to insert there\n");

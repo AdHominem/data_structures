@@ -11,15 +11,16 @@ int main() {
                    "Enter degree: \n");
 
     size_t degree;
+    int status;
     do {
-        get_size_t(&degree);
-        if (degree < 2) {
+        status = get_size_t(&degree);
+        if (status != 0 || degree < 2) {
             fprintf(stderr, "Degree must be a valid size_t >= 2\n");
         }
-    } while (degree < 2);
+    } while (status || degree < 2);
 
     Tree *tree = create_tree(degree);
-    printf("Created a tree of degree %zu\n\n", degree);
+    printf("Created a tree of degree %u\n\n", degree);
 
     printf("Commands: \n"
                    "\t<number> - Adds the number to the tree\n"
