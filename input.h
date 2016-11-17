@@ -41,8 +41,6 @@ int get_tokens(char *line, char **tokens, const size_t number_of_tokens) {
             tokens[i] = token;
             line = NULL;
         } else {
-            // If token is NULL that means not enough tokens found
-            //fprintf(stderr, "Not enough tokens!\n");
             return 1;
         }
     }

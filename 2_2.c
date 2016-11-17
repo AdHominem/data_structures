@@ -20,7 +20,12 @@ int main() {
     } while (status || degree < 2);
 
     Tree *tree = create_tree(degree);
-    printf("Created a tree of degree %u\n\n", degree);
+    if (tree == NULL) {
+        perror("Could not allocate memory!");
+        return 1;
+    }
+
+    printf("Created a tree of degree %zu\n\n", degree);
 
     printf("Commands: \n"
                    "\t<number> - Adds the number to the tree\n"

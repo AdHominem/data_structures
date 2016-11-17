@@ -12,6 +12,11 @@ int main() {
 
 
     BinaryTree *tree = create_binary_tree();
+    if (tree == NULL) {
+        perror("Could not allocate memory!");
+        return 1;
+    }
+
     printf("Created a binary tree\n\n");
 
     printf("Commands: \n"

@@ -2,14 +2,31 @@
 #include "input.h"
 #include "data_structures.h"
 
-int main() {
-    printf("Hello\n");
-    TreeNodeArray *nodes = create_node_array(3);
-    for (size_t i = 0; i < nodes->length; ++i) {
-        printf("%p ", nodes->elements[i]);
-    }
+typedef struct my {
+    size_t length;
+    char copy;
+    char name[5];
+    int *array;
+} MY;
 
-//    TreeNode *node = create_tree_node(3);
-//    printf("%p ", node->children->elements[0]);
+MY *create_my(size_t length, char name[5]) {
+    MY *result = malloc(sizeof(MY));
+    result->length = length;
+    result->copy = 'a';
+    result->array = calloc(length, sizeof(int));
+    memset(result->array, 42, length * sizeof(int));
+    result->name[0] = 'h';
+    return result;
+}
+
+int main() {
+    //MY *my = create_my(5, "Mine!");
+    int a = 10;
+    char b = 'a';
+    char string[] = "Hello";
+    int array[] = {1,2,3};
+    return 1;
+
+
 }
 
