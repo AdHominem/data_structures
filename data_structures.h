@@ -47,20 +47,20 @@ LinkedListNode *create_linked_list_node(int value) {
 LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
     if (node) {
         node->next = destroy_nodes_recursively(node->next);
-        free(node);
     }
+    free(node);
     return NULL;
 }
 
 LinkedList *create_linked_list() {
-    return malloc(sizeof(LinkedList));
+    return calloc(1, sizeof(LinkedList));
 }
 
 LinkedList *destroy_linked_list(LinkedList *list) {
     if (list) {
         list->head = destroy_nodes_recursively(list->head);
-        free(list);
     }
+    free(list);
     return NULL;
 }
 
@@ -717,6 +717,7 @@ void link_alnodes(AdjacencyListNode *from, AdjacencyListNode *to) {
 }
 
 void print_alist(AdjacencyList *list) {
+
     for (int i = 0; i < NODES_COUNT; ++i) {
         printf("%d: ", i);
         print_linked_list(list->nodes[i]->successors);
