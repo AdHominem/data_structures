@@ -315,8 +315,13 @@ TreeNode *create_tree_node(size_t degree) {
     return result;
 }
 
+/// Creates a new n-ary tree
+/// \param degree The degree
+/// \return A pointer to the new tree or NULL in case of memory error or if the degree is invalid (lower than 2)
 Tree *create_tree(size_t degree) {
-    assert(degree >= 2);
+    if (degree < 2) {
+        return NULL;
+    }
 
     Tree *result = malloc(sizeof(Tree));
     if (result == NULL) {

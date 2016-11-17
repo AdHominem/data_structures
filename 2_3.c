@@ -13,7 +13,7 @@ int main() {
 
     BinaryTree *tree = create_binary_tree();
     if (tree == NULL) {
-        perror("Could not allocate memory!");
+        fprintf(stderr, "Memory Error: Could not create tree!\n");
         return 1;
     }
 
@@ -42,7 +42,11 @@ int main() {
         }
         else if (!strcmp(tokens, "+")) {
             int to_add = rand() % 100 - 50;
-            add_to_binary_tree(tree, to_add);
+            if (add_to_binary_tree(tree, to_add)) {
+                fprintf(stderr, "Memory Error: Could not add to tree!\n");
+                destroy_binary_tree(tree);
+                return 1;
+            }
             printf ("Added %d to the tree\n", to_add);
         }
         else if (!strcmp(tokens, "-")) {

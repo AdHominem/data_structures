@@ -21,7 +21,7 @@ int main() {
 
     Tree *tree = create_tree(degree);
     if (tree == NULL) {
-        perror("Could not allocate memory!");
+        fprintf(stderr, "Could not create a tree!\n");
         return 1;
     }
 
@@ -47,7 +47,11 @@ int main() {
             print_tree(tree);
         }
         else if (!string_to_integer(tokens, &value)) {
-            add_to_tree(tree, value);
+            if (add_to_tree(tree, value)) {
+                fprintf(stderr, "Memory Error: Could not add to tree!\n");
+                destroy_tree(tree);
+                return 1;
+            }
             printf ("Added %d to the tree\n", value);
         }
     }
