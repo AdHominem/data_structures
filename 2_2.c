@@ -11,14 +11,20 @@ int main() {
                    "Enter degree: \n");
 
     size_t degree;
+    int status;
     do {
-        get_size_t(&degree);
-        if (degree < 2) {
+        status = get_size_t(&degree);
+        if (status != 0 || degree < 2) {
             fprintf(stderr, "Degree must be a valid size_t >= 2\n");
         }
-    } while (degree < 2);
+    } while (status || degree < 2);
 
     Tree *tree = create_tree(degree);
+    if (tree == NULL) {
+        fprintf(stderr, "Could not create a tree!\n");
+        return 1;
+    }
+
     printf("Created a tree of degree %zu\n\n", degree);
 
     printf("Commands: \n"
@@ -41,7 +47,11 @@ int main() {
             print_tree(tree);
         }
         else if (!string_to_integer(tokens, &value)) {
-            add_to_tree(tree, value);
+            if (add_to_tree(tree, value)) {
+                fprintf(stderr, "Memory Error: Could not add to tree!\n");
+                destroy_tree(tree);
+                return 1;
+            }
             printf ("Added %d to the tree\n", value);
         }
     }

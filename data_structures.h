@@ -7,10 +7,15 @@
 
 /*
  * Contains:
+ *
  * - Linked List
+ *      A basic linked list with integer nodes
  * - Integer Array
+ *      A wrapper class for an integer array plus its size
  * - Tree
+ *      A generic n-ary tree without rebalancing and node removal
  * - Binary Tree
+ *      A non-balancing binary tree
  */
 
 /* ### LINKED LIST ### */
@@ -25,12 +30,16 @@ struct llnode {
     LinkedListNode *next;
 };
 
+/// Linked list is just a wrapper for the nodes
 typedef struct llist {
     LinkedListNode *head;
 } LinkedList;
 
 // CONSTRUCTORS AND DESTRUCTORS
 
+/// Creates a new linked list node
+/// \param value The node's value
+/// \return A pointer to the new node or NULL if memory allocation failed
 LinkedListNode *create_linked_list_node(int value) {
     LinkedListNode *result = malloc(sizeof(LinkedListNode));
     if (result == NULL) {
@@ -44,28 +53,39 @@ LinkedListNode *create_linked_list_node(int value) {
     return result;
 }
 
+/// Destroys all linked nodes starting at node. This is usually the root of a linked list
+/// \param linkedlistnode The node to destroy
+/// \return A NULL pointer to be used for overwriting the object pointer
 LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
     if (node) {
         node->next = destroy_nodes_recursively(node->next);
-        free(node);
     }
+    free(node);
     return NULL;
 }
 
+/// Creates a linked list
+/// \return A pointer to the list or NULL if memory allocation failed
 LinkedList *create_linked_list() {
-    return malloc(sizeof(LinkedList));
+    return calloc(1, sizeof(LinkedList));
 }
 
+/// Destroys the given list, freeing its memory
+/// \param list The list to destroy
+/// \return A NULL pointer to be used for overwriting the object pointer
 LinkedList *destroy_linked_list(LinkedList *list) {
     if (list) {
         list->head = destroy_nodes_recursively(list->head);
-        free(list);
     }
+    free(list);
     return NULL;
 }
 
 // FUNCTIONS
 
+/// Calculates the length of the linked list dynamically
+/// \param list The target list
+/// \return The length
 size_t length_of_(LinkedList *list) {
     LinkedListNode *head = list->head;
     size_t result = 0;
@@ -78,23 +98,30 @@ size_t length_of_(LinkedList *list) {
     return result;
 }
 
-void insert_at_linked_list(LinkedList *list, int value, size_t index) {
+/// Inserts a value at a given index
+/// \param list The list to insert into
+/// \param value The value to insert
+/// \param index The index at which the insertion takes place
+/// \return 0 if insertion was successful, 2 if index was out of range and 1 if memory allocation failed
+int insert_at_linked_list(LinkedList *list, int value, size_t index) {
 
     // Catch index out of range
     if (index > length_of_(list)) {
         perror("List index out of range!");
-        exit(1);
+        return 2;
     }
 
     LinkedListNode *head = list->head;
     LinkedListNode *to_insert = create_linked_list_node(value);
+    if (to_insert == NULL) {
+        return 1;
+    }
 
     // Catch append to front case
     // Else insert normally
     if (index == 0) {
         to_insert->next = head;
         list->head = to_insert;
-        return;
     } else {
         LinkedListNode *before = head;
 
@@ -106,8 +133,12 @@ void insert_at_linked_list(LinkedList *list, int value, size_t index) {
         before->next = to_insert;
         to_insert->next = head;
     }
+    return 0;
 }
 
+/// Wrapper for insert_at_linked_list() to append a value to the end
+/// \param list The target list
+/// \param value The value to append
 void add_to_linked_list(LinkedList *list, int value) {
     insert_at_linked_list(list, value, length_of_(list));
 }
@@ -123,6 +154,10 @@ void print_linked_list(LinkedList *list) {
     printf("\n");
 }
 
+/// Returns 1 if the list contains a specified value
+/// \param list The list to search in
+/// \param value The value to search for
+/// \return 1 if the list contains that value, else 0
 int linked_list_contains(LinkedList *list, int value) {
     LinkedListNode *current = list->head;
     while (current) {
@@ -151,30 +186,34 @@ typedef struct integer_array {
 
 // CONSTRUCTORS AND DESTRUCTORS
 
-IntegerArray *create_integer_array(size_t length) {
-    IntegerArray *result = malloc(sizeof(IntegerArray));
-    if (result == NULL) {
-        perror("Could not allocate memory!");
-        return NULL;
-    }
-
-    result->elements = malloc(length * sizeof(int));
-    if (result->elements == NULL) {
-        perror("Could not allocate memory!");
-        return NULL;
-    }
-
-    result->length = length;
-
-    return result;
-}
-
+/// Destroy an integer array
+/// \param integerArray The integer array
+/// \return NULL
 IntegerArray *destroy_integer_array(IntegerArray *integerArray) {
     if (integerArray) {
         free(integerArray->elements);
         free(integerArray);
     }
     return NULL;
+}
+
+/// Creates a new integer array of given length
+/// \param length The length of thr array
+/// \return A pointer to the given array or NULL in case of a memory allocation failure
+IntegerArray *create_integer_array(size_t length) {
+    IntegerArray *result = malloc(sizeof(IntegerArray));
+    if (result == NULL) {
+        return NULL;
+    }
+
+    result->elements = calloc(length, sizeof(int));
+    if (result->elements == NULL) {
+        return destroy_integer_array(result);
+    }
+
+    result->length = length;
+
+    return result;
 }
 
 void print_integer_array(IntegerArray *integerArray) {
@@ -215,24 +254,9 @@ typedef struct tree {
 
 // CONSTRUCTORS AND DESTRUCTORS
 
-TreeNodeArray *create_node_array(size_t length) {
-    TreeNodeArray *result = malloc(sizeof(TreeNodeArray));
-    if (result == NULL) {
-        perror("Could not allocate memory!");
-        return NULL;
-    }
-
-    result->elements = malloc(length * sizeof(TreeNode));
-    if (result->elements == NULL) {
-        perror("Could not allocate memory!");
-        return NULL;
-    }
-
-    result->length = length;
-
-    return result;
-}
-
+/// Destroy a given node array
+/// \param nodeArray The node array to destroy
+/// \return NULL
 TreeNodeArray *destroy_node_array(TreeNodeArray *nodeArray) {
     if (nodeArray) {
         free(nodeArray->elements);
@@ -241,18 +265,21 @@ TreeNodeArray *destroy_node_array(TreeNodeArray *nodeArray) {
     return NULL;
 }
 
-TreeNode *create_tree_node(size_t degree) {
-
-    TreeNode *result = malloc(sizeof(TreeNode));
+/// Creates an array of nodes with a given length
+/// \param length The length of the array
+/// \return A pointer to the new array or NULL if memory allocation failed
+TreeNodeArray *create_node_array(size_t length) {
+    TreeNodeArray *result = malloc(sizeof(TreeNodeArray));
     if (result == NULL) {
-        perror("Could not allocate memory!");
         return NULL;
     }
 
-    result->keys = create_integer_array(degree - 1);
-    result->children = create_node_array(degree);
-    result->degree = degree;
-    result->last_key_index = 0;
+    result->elements = calloc(length, sizeof(TreeNode));
+    if (result->elements == NULL) {
+        return destroy_node_array(result);
+    }
+
+    result->length = length;
 
     return result;
 }
@@ -266,12 +293,38 @@ TreeNode *destroy_tree_node(TreeNode *node) {
     return NULL;
 }
 
+/// Creates a new node of given degree
+/// \param degree The degree of the node
+/// \return A pointer to the new node or NULL in case of memory allocation failure
+TreeNode *create_tree_node(size_t degree) {
+
+    TreeNode *result = malloc(sizeof(TreeNode));
+    if (result == NULL) {
+        return NULL;
+    }
+
+    result->keys = create_integer_array(degree - 1);
+    result->children = create_node_array(degree);
+    if (result->keys == NULL || result->children == NULL) {
+        return destroy_tree_node(result);
+    }
+
+    result->degree = degree;
+    result->last_key_index = 0;
+
+    return result;
+}
+
+/// Creates a new n-ary tree
+/// \param degree The degree
+/// \return A pointer to the new tree or NULL in case of memory error or if the degree is invalid (lower than 2)
 Tree *create_tree(size_t degree) {
-    assert(degree >= 2);
+    if (degree < 2) {
+        return NULL;
+    }
 
     Tree *result = malloc(sizeof(Tree));
     if (result == NULL) {
-        perror("Could not allocate memory!");
         return NULL;
     }
 
@@ -307,60 +360,75 @@ void print_tree_node_keys(TreeNode *node) {
     printf("]\n");
 }
 
-// Checks in which child tree_node the value may fit, or if it fits inside the key array.
-// Will create a new child tree_node if necessary.
-void add_to_tree_internal(TreeNode *node, int value) {
+/// Checks in which child tree_node the value may fit, or if it fits inside the key array.
+/// Will create a new child tree_node if necessary.
+/// \param node The node from which to start insertion
+/// \param value The value to insert
+/// \return 0 if insertion was successful or 1 if creating a new node was impossible due to memory error and 2 if the
+/// given node was NULL and 3 if the function terminates unexpectedly
+int add_to_tree_internal(TreeNode *node, int value) {
 
     if (!node) {
-        return;
+        return 2;
     }
 
     for (size_t i = 0; i < node->degree - 1; i++) {
 
-        if (node->keys->elements[i] >= value) {
-            //printf("It seems %d is smaller than %d, will be inserted into my left child!\n", value, tree_node->keys->elements[i]);
-            if (node->children->elements[i] != NULL) {
-                //printf("\tSince I have a left child, I'm going to insert there\n");
-                add_to_tree_internal(node->children->elements[i], value);
-                return;
-            } else {
-                //printf("\tSeems I don't have a left child yet, creating one!\n");
-                node->children->elements[i] = create_tree_node(node->degree);
-                node->children->elements[i]->keys->elements[0] = value;
-                node->children->elements[i]->last_key_index += 1;
-                return;
-            }
-        } else if (i == node->last_key_index) {
-            //printf("It seems %d might fit into my key array!\n", value);
+        if (i == node->last_key_index) {
             node->keys->elements[i] = value;
             node->last_key_index += 1;
-            return;
-        } else if (i == node->degree - 2){
-            //printf("It seems %d is bigger than %d, will be inserted into my right child!\n", value, tree_node->keys->elements[i]);
+            return 0;
+        }
+        else if (node->keys->elements[i] >= value) {
+            if (node->children->elements[i] != NULL) {
+                return add_to_tree_internal(node->children->elements[i], value);
+            }
+            else {
+                node->children->elements[i] = create_tree_node(node->degree);
+                if (node->children->elements[i] == NULL) {
+                    return 1;
+                }
+                node->children->elements[i]->keys->elements[0] = value;
+                node->children->elements[i]->last_key_index += 1;
+                return 0;
+            }
+        }
+        else if (i == node->degree - 2){
             if (node->children->elements[i + 1] != NULL) {
-                //printf("\tSince I have a right child, I'm going to insert there\n");
-                add_to_tree_internal(node->children->elements[i + 1], value);
-                return;
+                return add_to_tree_internal(node->children->elements[i + 1], value);
             } else {
-                //printf("\tSeems I don't have a right child yet, creating one!\n");
                 node->children->elements[i + 1] = create_tree_node(node->degree);
+                if (node->children->elements[i + 1] == NULL) {
+                    return 1;
+                }
                 node->children->elements[i + 1]->keys->elements[0] = value;
                 node->children->elements[i + 1]->last_key_index += 1;
-                return;
+                return 0;
             }
         }
     }
+
+    return 3;
 }
 
-// Adds a new value to the tree and creates a root tree_node if the tree is empty
-void add_to_tree(Tree *tree, int value) {
+/// Adds a new value to the tree and creates a root tree_node if the tree is empty
+/// \param tree The tree to extend
+/// \param value The value to insert
+/// \return 0 if insertion was successful, else 1 in case of memory error
+int add_to_tree(Tree *tree, int value) {
     if (tree->root == NULL) {
         tree->root = create_tree_node(tree->degree);
+        if (tree->root == NULL) {
+            return 1;
+        }
         tree->root->keys->elements[0] = value;
         tree->root->last_key_index = 1;
     } else {
-        add_to_tree_internal(tree->root, value);
+        if (add_to_tree_internal(tree->root, value)) {
+            return 1;
+        }
     }
+    return 0;
 }
 
 // Prints all the nodes recursively, indenting them for better readability
@@ -446,11 +514,13 @@ typedef struct binary_tree {
 
 // CONSTRUCTORS AND DESTRUCTORS
 
+/// Creates a new binary tree node
+/// \param value The value of the new node
+/// \return A pointer to the new node or NULL in case of memory error
 BinaryTreeNode *create_binary_tree_node(int value) {
 
     BinaryTreeNode *result = malloc(sizeof(BinaryTreeNode));
     if (result == NULL) {
-        perror("Could not allocate memory!");
         return NULL;
     }
 
@@ -489,7 +559,6 @@ BinaryTree *create_binary_tree() {
 
     BinaryTree *result = malloc(sizeof(BinaryTree));
     if (result == NULL) {
-        perror("Could not allocate memory!");
         return NULL;
     }
 
@@ -511,7 +580,8 @@ BinaryTree *destroy_binary_tree(BinaryTree *tree) {
 /// Will create a new child node if necessary.
 /// \param node The node at which the insertion starts
 /// \param value The value to insert
-void add_to_binary_tree_internal(BinaryTreeNode *node, int value) {
+/// \return 0 if successful, else 1 in case of memory error
+int add_to_binary_tree_internal(BinaryTreeNode *node, int value) {
 
     if (node) {
         if (node->value >= value) {
@@ -519,6 +589,9 @@ void add_to_binary_tree_internal(BinaryTreeNode *node, int value) {
                 add_to_binary_tree_internal(node->left, value);
             } else {
                 node->left = create_binary_tree_node(value);
+                if (node->left == NULL) {
+                    return 1;
+                }
                 node->left->parent = node;
             }
         } else {
@@ -526,21 +599,32 @@ void add_to_binary_tree_internal(BinaryTreeNode *node, int value) {
                 add_to_binary_tree_internal(node->right, value);
             } else {
                 node->right = create_binary_tree_node(value);
+                if (node->right == NULL) {
+                    return 1;
+                }
                 node->right->parent = node;
             }
         }
     }
+    return 0;
 }
 
 /// Adds a new value to the tree and creates a root node if the tree is empty
 /// \param tree The tree to extend
 /// \param value The value to insert
-void add_to_binary_tree(BinaryTree *tree, int value) {
+/// \return 0 if successful, else 1 in case of memory error
+int add_to_binary_tree(BinaryTree *tree, int value) {
     if (tree->root == NULL) {
         tree->root = create_binary_tree_node(value);
+        if (tree->root == NULL) {
+            return 1;
+        }
     } else {
-        add_to_binary_tree_internal(tree->root, value);
+        if (add_to_binary_tree_internal(tree->root, value)) {
+            return 1;
+        }
     }
+    return 0;
 }
 
 /// Prints all the nodes recursively, indenting them for better readability
@@ -597,14 +681,24 @@ BinaryTreeNode *search_in_binary_tree(BinaryTree *tree, int value) {
     return search_in_binary_tree_internal(tree->root, value);
 }
 
+/// Returns the rightmost node of a given node
+/// \param node The node from where to start searching
+/// \return The rightmost node or the node itself if it has no right node
 BinaryTreeNode *rightmost_node_of_(BinaryTreeNode *node) {
     return node->right ? rightmost_node_of_(node->right) : node;
 }
 
+/// Returns the leftmost node of a given node
+/// \param node The node from where to start searching
+/// \return The leftmost node or the node itself if it has no left node
 BinaryTreeNode *leftmost_node_of_(BinaryTreeNode *node) {
     return node->left ? leftmost_node_of_(node->left) : node;
 }
 
+/// Deletes the node with value from the subtree starting at node
+/// \param node The root from which to start looking
+/// \param value The value of the node to be deleted
+/// \return 0 if the node was successfully deleted, else 1 if the given value was not in the subtree
 int delete_binary_tree_node_internal(BinaryTreeNode *node, int value) {
     BinaryTreeNode *target = search_in_binary_tree_internal(node, value);
     if (target == NULL) {
@@ -659,20 +753,9 @@ typedef struct alist {
 
 // CONSTRUCTORS AND DESTRUCTORS
 
-AdjacencyListNode *create_alnode(int value) {
-
-    AdjacencyListNode *result = malloc(sizeof(AdjacencyListNode));
-    if (result == NULL) {
-        perror("Could not allocate memory!");
-        return NULL;
-    }
-
-    result->value = value;
-    result->successors = create_linked_list();
-
-    return result;
-}
-
+/// Destroy an adjacency list node
+/// \param node The node to destroy
+/// \return NULL
 AdjacencyListNode *destroy_alnode(AdjacencyListNode *node) {
     if (node) {
         node->successors = destroy_linked_list(node->successors);
@@ -681,20 +764,29 @@ AdjacencyListNode *destroy_alnode(AdjacencyListNode *node) {
     return NULL;
 }
 
-// This adjacency list comes pre initialized with nodes of value 0-19
-AdjacencyList *create_alist() {
-    AdjacencyList *result = malloc(sizeof(AdjacencyList));
+/// Creates a new node for an adjacency list
+/// \param value The node's integer value
+/// \return A pointer to the node or NULL if memory allocation failed
+AdjacencyListNode *create_alnode(int value) {
+
+    AdjacencyListNode *result = malloc(sizeof(AdjacencyListNode));
     if (result == NULL) {
         return NULL;
     }
 
-    for (int i = 0; i < NODES_COUNT; ++i) {
-        result->nodes[i] = create_alnode(i);
+    result->value = value;
+
+    result->successors = create_linked_list();
+    if (result->successors == NULL) {
+        return destroy_alnode(result);
     }
 
     return result;
 }
 
+/// Destroys an adjacency list
+/// \param list The list to destroy
+/// \return NULL
 AdjacencyList *destroy_alist(AdjacencyList *list) {
     if (list) {
         for (int i = 0; i < NODES_COUNT; ++i) {
@@ -705,8 +797,29 @@ AdjacencyList *destroy_alist(AdjacencyList *list) {
     return NULL;
 }
 
+/// Creates a new adjacency list pre initialized with nodes of value 0-19
+/// \return A pointer to the list or NULL if memory allocation failed
+AdjacencyList *create_alist() {
+    AdjacencyList *result = malloc(sizeof(AdjacencyList));
+    if (result == NULL) {
+        return NULL;
+    }
+
+    for (int i = 0; i < NODES_COUNT; ++i) {
+        result->nodes[i] = create_alnode(i);
+        if (result->nodes[i] == NULL) {
+            return destroy_alist(result);
+        }
+    }
+
+    return result;
+}
+
 // FUNCTIONS
 
+/// Links two given adjaceny list nodes
+/// \param from The node from wich the edge starts
+/// \param to The node to which the edge goes
 void link_alnodes(AdjacencyListNode *from, AdjacencyListNode *to) {
     if (from && to && !linked_list_contains(from->successors, to->value)) {
         add_to_linked_list(from->successors, to->value);
@@ -714,6 +827,7 @@ void link_alnodes(AdjacencyListNode *from, AdjacencyListNode *to) {
 }
 
 void print_alist(AdjacencyList *list) {
+
     for (int i = 0; i < NODES_COUNT; ++i) {
         printf("%d: ", i);
         print_linked_list(list->nodes[i]->successors);

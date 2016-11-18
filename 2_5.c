@@ -36,6 +36,10 @@ int main() {
     printf("Created a random graph!\n");
 
     AdjacencyList *graph = create_alist();
+    if (graph == NULL) {
+        perror("Could not allocate memory!");
+        return 1;
+    }
 
     int matrix[NODES_COUNT][NODES_COUNT];
     for (int i = 0; i < NODES_COUNT; ++i) {
