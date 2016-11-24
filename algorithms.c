@@ -2,7 +2,6 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <ncurses.h>
 
 
 void print_array(int *array, size_t length) {

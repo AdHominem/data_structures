@@ -362,6 +362,7 @@ void print_tree_node_keys(TreeNode *node) {
 
 /// Checks in which child tree_node the value may fit, or if it fits inside the key array.
 /// Will create a new child tree_node if necessary.
+/// This is an internal function which should not be called directly
 /// \param node The node from which to start insertion
 /// \param value The value to insert
 /// \return 0 if insertion was successful or 1 if creating a new node was impossible due to memory error and 2 if the
@@ -456,6 +457,11 @@ void print_tree(Tree *tree) {
     print_tree_nodes(tree->root, 1);
 }
 
+/// Recursively searches for a given value inside the tree
+/// This is an internal function which should not be called directly
+/// \param node The node indicating the subtree to start at
+/// \param value The value to search
+/// \return A pointer to the searched node or NULL if the value is not in the tree
 TreeNode *search_in_tree_internal(TreeNode *node, int value) {
 
     if (!node) {
@@ -463,28 +469,24 @@ TreeNode *search_in_tree_internal(TreeNode *node, int value) {
     }
 
     for (size_t i = 0; i < node->last_key_index; ++i) {
-
-        // Check if value is in the keys
         if (node->keys->elements[i] == value) {
             return node;
         }
-
-            // Else check if it's too small to fit, so we need to go down the left subtree
         else if (value < node->keys->elements[i]) {
             return search_in_tree_internal(node->children->elements[i], value);
         }
-
-            // Else check if we are at the last key
         else if (i == node->degree - 2) {
-            // Now value is bigger than the last element and could only be in the right child
-            // Only the last key in the array can have a right child
             return search_in_tree_internal(node->children->elements[i + 1], value);
         }
     }
+
     return NULL;
 }
 
-// Returns a pointer to the containing TreeNode or NULL, if value not in graph
+/// Recursively searches for a given value inside the tree
+/// \param tree The tree to search in
+/// \param value The value to search
+/// \return A pointer to the searched node or NULL if the value is not in the tree
 TreeNode *search_in_tree(Tree *tree, int value) {
     return search_in_tree_internal(tree->root, value);
 }
@@ -578,6 +580,7 @@ BinaryTree *destroy_binary_tree(BinaryTree *tree) {
 
 /// Checks in which child node the value may fit, or if it fits inside the key array.
 /// Will create a new child node if necessary.
+/// This is an internal function which should not be called directly
 /// \param node The node at which the insertion starts
 /// \param value The value to insert
 /// \return 0 if successful, else 1 in case of memory error
@@ -656,6 +659,7 @@ void print_binary_tree(BinaryTree *tree) {
 }
 
 /// Searches a value inside a subtree and fetches the respective node if found
+/// This is an internal function which should not be called directly
 /// \param node The subtree to search in
 /// \param value The value to search
 /// \return A pointer to the containing BinaryTreeNode or NULL, if the subtree doesn't contain the value
@@ -696,6 +700,7 @@ BinaryTreeNode *leftmost_node_of_(BinaryTreeNode *node) {
 }
 
 /// Deletes the node with value from the subtree starting at node
+/// This is an internal function which should not be called directly
 /// \param node The root from which to start looking
 /// \param value The value of the node to be deleted
 /// \return 0 if the node was successfully deleted, else 1 if the given value was not in the subtree
