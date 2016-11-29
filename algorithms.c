@@ -8,6 +8,7 @@ void print_array(int *array, size_t length) {
     for (size_t i = 0; i < length; ++i) {
         printf("%d ", array[i]);
     }
+    printf("\n");
 }
 
 
@@ -62,6 +63,7 @@ void print_array(int *array, size_t length) {
 //}
 
 void swap(int *array, size_t a, size_t b) {
+    printf("Swapping array[%zu] = %d with array[%zu] = %d\n", a, array[a], b, array[b]);
     int temp = array[a];
     array[a] = array[b];
     array[b] = temp;
@@ -77,37 +79,70 @@ void bubblesort(int *array, size_t length) {
     }
 }
 
-size_t divide(int *array, size_t left, size_t right) {
-    size_t i = left;
-    size_t  j = right - 1;
-    int pivot = array[right];
+/// Attempts to find the pivot value by scanning for two indices i and j which are both out of place in respect to
+/// the pivot value. These indices can then be swapped. Once the indiced cross each other, the algorithm stops.
+/// \param array The array to be partitioned.
+/// \param low The lower starting index.
+/// \param high The higher starting index.
+/// \return The new pivot value.
+size_t partition(int *array, size_t low, size_t high) {
+    int pivot = array[high];
+    size_t i = low;
+    size_t j = high + 1;
+    printf("partition(): pivot is now %d, i is %zu and j is %zu\n", pivot, i, j);
+    while (1) {
+        while (array[++i] < pivot);
+        //printf("i is now %zu\n", i);
+        while (array[--j] > pivot);
+        //printf("j is now %zu\n", j);
 
-    while (i < j) {
-        while (array[i] <= pivot && i < right) {
-            ++i;
-            printf("i is now %zu and array[i] now points to %d\t", i, array[i]);
-            //print_array(array, right);
-            printf("\n");
+        if (i >= j) {
+            return j;
         }
-        while (array[j] >= pivot && j > left) {
-            ++j;
-            printf("j is now %zu and array[j] now points to %d\t", j, array[j]);
-            //print_array(array, right);
-            printf("\n");
-        }
-        if (i < j) {
-            swap(array, i, j);
-        }
+
+        swap(array, i, j);
     }
-    return i;
+}
+
+void quicksort(int *array, size_t low, size_t high) {
+    size_t pivot;
+    if (low < high) {
+        pivot = partition(array, low, high);
+        quicksort(array, low, pivot);
+        //quicksort(array, pivot + 1, high);
+    }
 }
 
 int main() {
-    size_t size = 5;
-    int array[] = {2, 4, 1, 9, 3};
-    //bubblesort(array, size - 1);
-    //quickSort(array, 0, 5);
-    size_t i = divide(array, 0, size - 1);
+    size_t size = 9;
+    int array[] = {54, 26, 93, 17, 77, 31, 44, 55, 20};
+
+    /*
+     * 54, 26, 93, 17, 77, 31, 44, 55, 20
+     * pivot = 20
+     * i = 0
+     * j = 3
+     * 17, 26, 93, 54, 77, 31, 44, 55, 20
+     * i = 1
+     * j = 0
+     * Return 0
+     */
+
+    printf("Before: ");
     print_array(array, size);
 
+    size_t i = partition(array, 0, size - 1);
+    printf("Pivot: %zu\n", i);
+
+    printf("After: ");
+    print_array(array, size);
+
+    printf("Before: ");
+    print_array(array, size);
+
+    i = partition(array, 0, i);
+    printf("Pivot: %zu\n", i);
+
+    printf("After: ");
+    print_array(array, size);
 }
