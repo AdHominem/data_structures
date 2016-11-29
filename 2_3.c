@@ -17,8 +17,6 @@ int main() {
         return 1;
     }
 
-    printf("Created a binary tree\n\n");
-
     printf("Commands: \n"
                    "\t<+> - Add a random node to the tree\n"
                    "\t<-> - Removes a random node from the tree\n"

@@ -143,6 +143,8 @@ void add_to_linked_list(LinkedList *list, int value) {
     insert_at_linked_list(list, value, length_of_(list));
 }
 
+/// Prints the linked list as a one line blank delimited string
+/// \param list The list to print
 void print_linked_list(LinkedList *list) {
     LinkedListNode *head = list->head;
 
@@ -216,6 +218,8 @@ IntegerArray *create_integer_array(size_t length) {
     return result;
 }
 
+/// Prints the integer array as a one line comma delimited string
+/// \param integerArray The array to print
 void print_integer_array(IntegerArray *integerArray) {
     printf("[");
     for (size_t i = 0; i < integerArray->length; ++i) {
@@ -284,7 +288,10 @@ TreeNodeArray *create_node_array(size_t length) {
     return result;
 }
 
-TreeNode *destroy_tree_node(TreeNode *node) {
+/// Destroys a node and its child nodes recursively
+/// \param node The node to destroy
+/// \return A NULL pointer to clean up the node pointer
+TreeNode *destroy_tree_nodes_recursively(TreeNode *node) {
     if (node) {
         node->keys = destroy_integer_array(node->keys);
         node->children = destroy_node_array(node->children);
@@ -306,7 +313,7 @@ TreeNode *create_tree_node(size_t degree) {
     result->keys = create_integer_array(degree - 1);
     result->children = create_node_array(degree);
     if (result->keys == NULL || result->children == NULL) {
-        return destroy_tree_node(result);
+        return destroy_tree_nodes_recursively(result);
     }
 
     result->degree = degree;
@@ -333,9 +340,12 @@ Tree *create_tree(size_t degree) {
     return result;
 }
 
+/// Destroys the tree, recursively destroying its nodes
+/// \param tree The tree to destroy
+/// \return A NULL pointer to clean up the tree pointer
 Tree *destroy_tree(Tree *tree) {
     if (tree) {
-        tree->root = destroy_tree_node(tree->root);
+        tree->root = destroy_tree_nodes_recursively(tree->root);
     }
     free(tree);
     return NULL;
@@ -343,7 +353,8 @@ Tree *destroy_tree(Tree *tree) {
 
 // FUNCTIONS
 
-// Prints tree_node keys, also showing how many of the key slots are still unset
+/// Prints tree_node keys, also showing how many of the key slots are still unset
+/// \param node The node whose keys are to be printed
 void print_tree_node_keys(TreeNode *node) {
     printf("[");
     for (size_t j = 0; j < node->keys->length; ++j) {
@@ -431,7 +442,9 @@ int add_to_tree(Tree *tree, int value) {
     return 0;
 }
 
-// Prints all the nodes recursively, indenting them for better readability
+/// Prints all the nodes recursively, indenting them for better readability
+/// \param node The node to start printing from
+/// \param depth The depth of printing, this should be 1 initially
 void print_tree_nodes(TreeNode *node, size_t depth){
     if (node) {
         for (size_t key_index = 0; key_index < node->last_key_index; key_index++) {
@@ -452,10 +465,16 @@ void print_tree_nodes(TreeNode *node, size_t depth){
     }
 }
 
+/// Prints all the nodes of a tree recursively, indenting them for better readability
+/// \param tree The tree to print
 void print_tree(Tree *tree) {
     print_tree_nodes(tree->root, 1);
 }
 
+///
+/// \param node
+/// \param value
+/// \return
 TreeNode *search_in_tree_internal(TreeNode *node, int value) {
 
     if (!node) {
@@ -576,8 +595,7 @@ BinaryTree *destroy_binary_tree(BinaryTree *tree) {
 
 // FUNCTIONS
 
-/// Checks in which child node the value may fit, or if it fits inside the key array.
-/// Will create a new child node if necessary.
+/// Adds a new node with give value to the tree
 /// \param node The node at which the insertion starts
 /// \param value The value to insert
 /// \return 0 if successful, else 1 in case of memory error
