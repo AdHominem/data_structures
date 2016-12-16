@@ -189,6 +189,27 @@ int binary_search(const int *array, const size_t size, const int number) {
     return 0;
 }
 
+void quicksort(int *array, size_t size) {
+    if (size < 2) return;
+
+    int pivot = array[size / 2];
+
+    size_t i, j;
+    for (i = 0, j = size - 1; ; i++, j--) {
+        while (array[i] < pivot) i++;
+        while (array[j] > pivot) j--;
+
+        if (i >= j) break;
+
+        int temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+
+    quicksort(array, i);
+    quicksort(array + i, size - i);
+}
+
 int main() {
     size_t size = 9;
     int array[] = {54, 26, 93, 17, 77, 31, 44, 55, 20};
