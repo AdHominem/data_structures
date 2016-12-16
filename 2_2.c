@@ -2,7 +2,6 @@
 #include "data_structures.h"
 #include <stdbool.h>
 
-
 int main() {
 
     printf(        "########################\n"
