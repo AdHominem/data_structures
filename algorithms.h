@@ -1,9 +1,9 @@
-
+#ifndef ALGORITHMS_H
+#define ALGORITHMS_H
 
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 
 void print_array(int *array, size_t length) {
     for (size_t i = 0; i < length; ++i) {
@@ -18,42 +18,6 @@ void print_double_array(double *array, size_t length) {
     }
     printf("\n");
 }
-
-//unsigned partition(unsigned array[], unsigned lower_bound, unsigned upper_bound) {
-//    unsigned pivot, lb, ub, t;
-//
-//    pivot = array[lower_bound];
-//
-//    lb = lower_bound;
-//    ub = upper_bound + 1;
-//
-//    while(TRUE) {
-//        do {++lb;}
-//        while (array[lb] <= pivot && lb <= upper_bound );
-//
-//        do {--ub;}
-//        while (array[ub] > pivot );
-//
-//        if( lb >= ub ) break;
-//        t = array[lb];
-//        array[lb] = array[ub];
-//        array[ub] = t;
-//    }
-//
-//    t = array[lower_bound];
-//    array[lower_bound] = array[ub];
-//    array[ub] = t;
-//    return ub;
-//}
-//
-//void quickSort(unsigned array[], unsigned lower_bound, unsigned upper_bound) {
-//    unsigned j;
-//    if( lower_bound < upper_bound ) {
-//        j = partition( array, lower_bound, upper_bound);
-//        quickSort( array, lower_bound, j - 1);
-//        quickSort( array, j + 1, upper_bound);
-//    }
-//}
 
 void swap(int *array, size_t a, size_t b) {
     int temp = array[a];
@@ -135,40 +99,6 @@ int bucketsort(double *array, size_t length) {
     return 0;
 }
 
-/// Attempts to find the pivot value by scanning for two indices i and j which are both out of place in respect to
-/// the pivot value. These indices can then be swapped. Once the indiced cross each other, the algorithm stops.
-/// \param array The array to be partitioned.
-/// \param low The lower starting index.
-/// \param high The higher starting index.
-/// \return The new pivot value.
-size_t partition(int *array, size_t low, size_t high) {
-    int pivot = array[high];
-    size_t i = low;
-    size_t j = high + 1;
-    printf("partition(): pivot is now %d, i is %zu and j is %zu\n", pivot, i, j);
-    while (1) {
-        while (array[++i] < pivot);
-        //printf("i is now %zu\n", i);
-        while (array[--j] > pivot);
-        //printf("j is now %zu\n", j);
-
-        if (i >= j) {
-            return j;
-        }
-
-        swap(array, i, j);
-    }
-}
-
-void quicksort(int *array, size_t low, size_t high) {
-    size_t pivot;
-    if (low < high) {
-        pivot = partition(array, low, high);
-        quicksort(array, low, pivot);
-        //quicksort(array, pivot + 1, high);
-    }
-}
-
 int binary_search(const int *array, const size_t size, const int number) {
 
     size_t last = size;
@@ -189,6 +119,25 @@ int binary_search(const int *array, const size_t size, const int number) {
     return 0;
 }
 
+int interpolation_search(int *array, size_t size, int key) {
+    size_t low = 0;
+    size_t high = size - 1;
+    size_t middle;
+
+    while (array[high] != array[low] && key >= array[low] && key <= array[high]) {
+        middle = low + ((key - array[low]) * (high - low) / (array[high] - array[low]));
+        if (array[middle] < key) {
+            low = middle + 1;
+        } else if (key < array[middle]) {
+            high = middle - 1;
+        } else {
+            return 1;
+        }
+    }
+
+    return key == array[low];
+}
+
 void quicksort(int *array, size_t size) {
     if (size < 2) return;
 
@@ -198,53 +147,12 @@ void quicksort(int *array, size_t size) {
     for (i = 0, j = size - 1; ; i++, j--) {
         while (array[i] < pivot) i++;
         while (array[j] > pivot) j--;
-
         if (i >= j) break;
-
-        int temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
+        swap(array, i, j);
     }
 
     quicksort(array, i);
     quicksort(array + i, size - i);
 }
 
-int main() {
-    size_t size = 9;
-    int array[] = {54, 26, 93, 17, 77, 31, 44, 55, 20};
-
-
-
-
-
-
-    /*
-     * 54, 26, 93, 17, 77, 31, 44, 55, 20
-     * pivot = 20
-     * i = 0
-     * j = 3
-     * 17, 26, 93, 54, 77, 31, 44, 55, 20
-     * i = 1
-     * j = 0
-     * Return 0
-     */
-
-//    printf("Before: ");
-//    print_array(array, size);
-//
-//    size_t i = partition(array, 0, size - 1);
-//    printf("Pivot: %zu\n", i);
-//
-//    printf("After: ");
-//    print_array(array, size);
-//
-//    printf("Before: ");
-//    print_array(array, size);
-//
-//    i = partition(array, 0, i);
-//    printf("Pivot: %zu\n", i);
-//
-//    printf("After: ");
-//    print_array(array, size);
-}
+#endif
