@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <time.h>
 
-
 void print_array(int *array, size_t length) {
     for (size_t i = 0; i < length; ++i) {
         printf("%d ", array[i]);
@@ -170,9 +169,34 @@ void quicksort(int *array, size_t low, size_t high) {
     }
 }
 
+int binary_search(const int *array, const size_t size, const int number) {
+
+    size_t last = size;
+    size_t first = 0;
+
+    while (first <= last) {
+        size_t middle = first + (last - first) / 2;
+
+        if (number == array[middle]) {
+            return 1;
+        } else if (number > array[middle]) {
+            first = middle + 1;
+        } else {
+            last = middle - 1;
+        }
+    }
+
+    return 0;
+}
+
 int main() {
     size_t size = 9;
     int array[] = {54, 26, 93, 17, 77, 31, 44, 55, 20};
+
+
+
+
+
 
     /*
      * 54, 26, 93, 17, 77, 31, 44, 55, 20
@@ -185,21 +209,21 @@ int main() {
      * Return 0
      */
 
-    printf("Before: ");
-    print_array(array, size);
-
-    size_t i = partition(array, 0, size - 1);
-    printf("Pivot: %zu\n", i);
-
-    printf("After: ");
-    print_array(array, size);
-
-    printf("Before: ");
-    print_array(array, size);
-
-    i = partition(array, 0, i);
-    printf("Pivot: %zu\n", i);
-
-    printf("After: ");
-    print_array(array, size);
+//    printf("Before: ");
+//    print_array(array, size);
+//
+//    size_t i = partition(array, 0, size - 1);
+//    printf("Pivot: %zu\n", i);
+//
+//    printf("After: ");
+//    print_array(array, size);
+//
+//    printf("Before: ");
+//    print_array(array, size);
+//
+//    i = partition(array, 0, i);
+//    printf("Pivot: %zu\n", i);
+//
+//    printf("After: ");
+//    print_array(array, size);
 }
