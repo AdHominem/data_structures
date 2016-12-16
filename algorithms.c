@@ -136,10 +136,6 @@ int bucketsort(double *array, size_t length) {
     return 0;
 }
 
-size_t divide(int *array, size_t left, size_t right) {
-    size_t i = left;
-    size_t  j = right - 1;
-    int pivot = array[right];
 /// Attempts to find the pivot value by scanning for two indices i and j which are both out of place in respect to
 /// the pivot value. These indices can then be swapped. Once the indiced cross each other, the algorithm stops.
 /// \param array The array to be partitioned.
