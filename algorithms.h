@@ -81,6 +81,61 @@ void swap_d(double *array, size_t a, size_t b) {
 
 // ### ALGORITHMS ###
 
+/// Checks the heap property for an element at given index, compares it with its two child nodes. If one of its children
+/// is bigger, it will swap them and call this function again on the child index.
+/// \param array The heap to check as an array
+/// \param index The index to start checking at
+/// \param heap_size The size of the heap
+void max_heapify(int *array, size_t index, size_t heap_size) {
+    size_t left_child_index = 2 * index + 1;
+    size_t right_child_index = 2 * index + 2;
+//    printf("\tIncoming: \n\t");
+//    print_array(array, heap_size, TYPE_INT);
+
+//    printf("I am %d (%zu), my left child is %d (%zu) and my right child is %d (%zu)\n", array[index], index,
+//           array[left_child_index], left_child_index, array[right_child_index], right_child_index);
+
+    size_t maximum = ((left_child_index < heap_size) && (array[left_child_index] > array[index]))
+                     ? left_child_index : index;
+
+    if ((right_child_index < heap_size) && (array[right_child_index] > array[maximum])) {
+        maximum = right_child_index;
+    }
+    if (maximum != index) {
+        swap(array, index, maximum);
+//        printf("\tAfter swapping: \n\t");
+//        print_array(array, heap_size, TYPE_INT);
+        max_heapify(array, maximum, heap_size);
+    }
+
+}
+
+/// Constructs a binary heap out of an arbitrary array.
+/// \param array The array to build the heap of
+/// \param size The size of the array
+void build_max_heap(int *array, size_t size) {
+    if (size < 2) return;
+
+    // Note that it is only necessary to heapify the top (size / 2 - 1) elements,
+    // since the lower half will only contain leafs
+    for (size_t i = size / 2; i-- != 0;) {
+        //printf("Size in build_max_heap is %zu\n", i);
+        max_heapify(array, i, size);
+    }
+}
+
+void heapsort(int *array, size_t size) {
+    if (size < 2) return;
+
+    build_max_heap(array, size);
+    //print_array(array, size, TYPE_INT);
+    while (--size) {
+        //printf("Size is now %zu, swapping %d and %d\n", size, array[0], array[size]);
+        swap(array, 0, size);
+        max_heapify(array, 0, size);
+    }
+}
+
 void minsort(int *array, size_t length) {
 
     for (size_t i = 0; i < length; ++i) {
@@ -96,7 +151,6 @@ void minsort(int *array, size_t length) {
     }
 }
 
-// O(n^2)
 void bubblesort(int *array, size_t length) {
     if (!length) return;
 
