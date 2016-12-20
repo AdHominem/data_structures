@@ -8,6 +8,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+// ### UTILITY ###
+
+
 void print_int(const void *number) {
     int result = *((int*) number);
     printf("%d ", result);
@@ -25,7 +29,7 @@ void print_double(const void *number) {
 /// \return 1 in case of an invalid data type
 int print_array(const void *array, const size_t length, const char *type) {
 
-    void (*function)(const void *number);
+    void (*function)(const void *);
     void *cast_array;
     size_t size;
 
@@ -72,6 +76,24 @@ void swap_d(double *array, size_t a, size_t b) {
     double temp = array[a];
     array[a] = array[b];
     array[b] = temp;
+}
+
+
+// ### ALGORITHMS ###
+
+void minsort(int *array, size_t length) {
+
+    for (size_t i = 0; i < length; ++i) {
+        size_t smallest_index = i;
+        int smallest = array[i];
+        for (size_t j = i + 1; j < length; ++j) {
+            if (array[j] < smallest) {
+                swap(array, j, smallest_index);
+                smallest = array[j];
+                smallest_index = j;
+            }
+        }
+    }
 }
 
 // O(n^2)
