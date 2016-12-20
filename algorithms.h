@@ -136,6 +136,42 @@ void heapsort(int *array, size_t size) {
     }
 }
 
+void merge(int *array, size_t size, size_t middle) {
+    int *temp = malloc(size * sizeof (int));
+    print_array(array, size, TYPE_INT);
+
+    for (size_t lpos = 0, rpos = middle, i = 0; i < size; i++) {
+        int value;
+        if (rpos == size) {
+            value = array[lpos];
+            ++lpos;
+        } else if (lpos == middle || array[rpos] < array[lpos]) {
+            value = array[rpos];
+            ++rpos;
+        } else {
+            value = array[lpos];
+            ++lpos;
+        }
+        temp[i] = value;
+    }
+
+    // copy tmp to array
+    for (size_t i = 0; i < size; i++) {
+        array[i] = temp[i];
+    }
+
+    free(temp);
+}
+
+void mergesort(int *array, size_t size) {
+    if (size < 2) return;
+
+    size_t middle = size / 2;
+    mergesort(array, middle);
+    mergesort(array + middle, size - middle);
+    merge(array, size, middle);
+}
+
 void minsort(int *array, size_t length) {
 
     for (size_t i = 0; i < length; ++i) {
