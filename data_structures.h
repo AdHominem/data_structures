@@ -471,10 +471,10 @@ void print_tree(Tree *tree) {
     print_tree_nodes(tree->root, 1);
 }
 
-///
-/// \param node
-/// \param value
-/// \return
+/// Checks if a given value is contained by a node or its child nodes
+/// \param node The node to start searching at
+/// \param value The value to search for
+/// \return A pointer to the found node or NULL if the value is not found
 TreeNode *search_in_tree_internal(TreeNode *node, int value) {
 
     if (!node) {
@@ -487,13 +487,11 @@ TreeNode *search_in_tree_internal(TreeNode *node, int value) {
         if (node->keys->elements[i] == value) {
             return node;
         }
-
-            // Else check if it's too small to fit, so we need to go down the left subtree
+        // Else check if it's too small to fit, so we need to go down the left subtree
         else if (value < node->keys->elements[i]) {
             return search_in_tree_internal(node->children->elements[i], value);
         }
-
-            // Else check if we are at the last key
+        // Else check if we are at the last key
         else if (i == node->degree - 2) {
             // Now value is bigger than the last element and could only be in the right child
             // Only the last key in the array can have a right child
@@ -503,7 +501,10 @@ TreeNode *search_in_tree_internal(TreeNode *node, int value) {
     return NULL;
 }
 
-// Returns a pointer to the containing TreeNode or NULL, if value not in graph
+/// Checks if a given value is in a tree
+/// \param tree The tree in which to search
+/// \param value The value to search for
+/// \return A pointer to the found node or NULL if the value is not found
 TreeNode *search_in_tree(Tree *tree, int value) {
     return search_in_tree_internal(tree->root, value);
 }
