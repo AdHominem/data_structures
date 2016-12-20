@@ -1,11 +1,54 @@
 #ifndef ALGORITHMS_H
 #define ALGORITHMS_H
+#define TYPE_INT "TYPE_INT"
+#define TYPE_DOUBLE "TYPE_DOUBLE"
 
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-void print_array(int *array, size_t length) {
+void print_int(const void *number) {
+    int result = *((int*) number);
+    printf("%d ", result);
+}
+
+void print_double(const void *number) {
+    double result = *((double*)number);
+    printf("%f ", result);
+}
+
+/// Prints arrays of arbitrary type
+/// \param array The array to print
+/// \param length The length of the array
+/// \param type The data type xxx of the array elements in the form of "TYPE_XXX"
+/// \return 1 in case of an invalid data type
+int print_array(const void *array, const size_t length, const char *type) {
+
+    void (*function)(const void *number);
+    void *cast_array;
+    size_t size;
+
+    if (!strcmp(type, TYPE_INT)) {
+        function = print_int;
+        cast_array = (int *) array;
+        size = sizeof(int);
+    } else if (!strcmp(type, TYPE_DOUBLE)) {
+        function = print_double;
+        cast_array = (double *) array;
+        size = sizeof(double);
+    } else {
+        return 1;
+    }
+
+    for (size_t i = 0; i < length; ++i) {
+        function(cast_array + i * size);
+    }
+    printf("\n");
+    return 0;
+}
+
+/*void print_array(int *array, size_t length) {
     for (size_t i = 0; i < length; ++i) {
         printf("%d ", array[i]);
     }
@@ -17,7 +60,7 @@ void print_double_array(double *array, size_t length) {
         printf("%.3f ", array[i]);
     }
     printf("\n");
-}
+}*/
 
 void swap(int *array, size_t a, size_t b) {
     int temp = array[a];
