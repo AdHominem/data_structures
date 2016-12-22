@@ -16,6 +16,8 @@
  *      A generic n-ary tree without rebalancing and node removal
  * - Binary Tree
  *      A non-balancing binary tree
+ * - Hash Table
+ *      Currently with fixed size
  */
 
 /* ### LINKED LIST ### */
@@ -1094,10 +1096,6 @@ void b_tree_print(BTree *tree) {
     b_tree_nodes_print(tree->root, 1);
 }
 
-///
-/// \param node
-/// \param value
-/// \return
 BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
 
     if (!node) {
@@ -1130,6 +1128,68 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
 BTreeNode *b_tree_search(BTree *tree, int value) {
     return b_tree_search_internal(tree->root, value);
 }
+
+
+/* ### HASH TABLE ### */
+
+#define TABLE_SIZE 128
+
+// DATA STRUCTURES
+
+typedef size_t (*hash_function)(int);
+
+typedef struct hash_table {
+    LinkedList *rows[TABLE_SIZE];
+    hash_function hash_function;
+} HashTable;
+
+// CONSTRUCTORS AND DESTRUCTORS
+
+HashTable *hash_table_destroy(HashTable *hash_table) {
+    if (hash_table) {
+        for (size_t i = 0; i < TABLE_SIZE; ++i) {
+            hash_table->rows[i] = destroy_linked_list(hash_table->rows[i]);
+        }
+    }
+    free(hash_table);
+    return NULL;
+}
+
+/// Creates a new hash table using the specified hash function
+/// \param hash_function Hash function which maps an int to a size_t
+/// \return A pointer to the newly created HashTable or NULL in case of a memory error
+HashTable *hash_table_create(hash_function hash_function) {
+    HashTable *result = malloc(sizeof(HashTable));
+
+    for (size_t i = 0; i < TABLE_SIZE; ++i) {
+        result->rows[i] = create_linked_list();
+        if (!result->rows[i]) {
+            return hash_table_destroy(result);
+        }
+    }
+
+    result->hash_function = hash_function;
+
+    return result;
+}
+
+// FUNCTIONS
+
+void hash_table_print(HashTable *hash_table) {
+    for (size_t i = 0; i < TABLE_SIZE; ++i) {
+        printf("%zu: ", i);
+        print_linked_list(hash_table->rows[i]);
+    }
+}
+
+/// Adds a given value to the hash table, using the defined hash function
+/// \param hash_table The HashTable to use
+/// \param value The value to insert
+void hash_table_add(HashTable *hash_table, int value) {
+    size_t row_index = hash_table->hash_function(value);
+    add_to_linked_list(hash_table->rows[row_index], value);
+}
+
 
 
 #endif

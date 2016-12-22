@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define STRING_SIZE 5
+
 /* ### INTEGER ARRAY ###
  *
  * This is a wrapper which keeps track of the array length
@@ -300,41 +302,18 @@ void print_tree(Tree *tree) {
     print_tree_nodes(tree->root, 1);
 }
 
-///
-/// \param node
-/// \param value
-/// \return
-TreeNode *search_in_tree_internal(TreeNode *node, int value) {
-
-    if (!node) {
-        return NULL;
-    }
-
-    for (size_t i = 0; i < node->last_key_index; ++i) {
-
-        // Check if value is in the keys
-        if (node->keys->elements[i] == value) {
-            return node;
-        }
-
-            // Else check if it's too small to fit, so we need to go down the left subtree
-        else if (value < node->keys->elements[i]) {
-            return search_in_tree_internal(node->children->elements[i], value);
-        }
-
-            // Else check if we are at the last key
-        else if (i == node->degree - 2) {
-            // Now value is bigger than the last element and could only be in the right child
-            // Only the last key in the array can have a right child
-            return search_in_tree_internal(node->children->elements[i + 1], value);
-        }
-    }
-    return NULL;
-}
-
 // Returns a pointer to the containing TreeNode or NULL, if value not in graph
-TreeNode *search_in_tree(Tree *tree, int value) {
-    return search_in_tree_internal(tree->root, value);
+TreeNode *search(Tree *tree, int value) {
+
+    TreeNode *current_node = tree->root;
+    int original_value = value;
+
+    for (int i = 0; i < STRING_SIZE; ++i) {
+        int last_digit = value % 10;
+        value /= 10;
+        current_node = current_node->children->elements[last_digit];
+    }
+    return original_value == current_node->keys->elements[0] ? current_node : NULL;
 }
 
 void add(TreeNode *node, int value) {
@@ -360,7 +339,7 @@ void add_root(Tree *tree, int value) {
 
 // height of trie is the length of the longest key
 // degree is the amount of different alphabet symbols
-//
+// If a node is a leaf, it has just one key
 int main() {
     // alphabet: 0,1,2,3,4,5,6,7,8,9
     // height: 2
