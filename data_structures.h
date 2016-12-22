@@ -9,15 +9,11 @@
  * Contains:
  *
  * - Linked List
- *      A basic linked list with integer nodes
  * - Integer Array
- *      A wrapper class for an integer array plus its size
  * - Tree
- *      A generic n-ary tree without rebalancing and node removal
  * - Binary Tree
- *      A non-balancing binary tree
+ * - B-Tree
  * - Hash Table
- *      Currently with fixed size
  */
 
 /* ### LINKED LIST ### */
