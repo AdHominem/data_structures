@@ -16,6 +16,7 @@
  * - Hash Table
  */
 
+
 /* ### LINKED LIST ### */
 
 
@@ -1132,11 +1133,12 @@ BTreeNode *b_tree_search(BTree *tree, int value) {
 
 // DATA STRUCTURES
 
-typedef size_t (*hash_function)(int);
+typedef size_t (*hash_function)(const int *);
 
 typedef struct hash_table {
     LinkedList *rows[TABLE_SIZE];
     hash_function hash_function;
+    size_t argument_count;
 } HashTable;
 
 // CONSTRUCTORS AND DESTRUCTORS
@@ -1152,9 +1154,10 @@ HashTable *hash_table_destroy(HashTable *hash_table) {
 }
 
 /// Creates a new hash table using the specified hash function
-/// \param hash_function Hash function which maps an int to a size_t
+/// \param hash_function Hash function which maps an int array of params to a size_t. The first element is expected
+/// to be the value to hash, the others are further arguments if needed
 /// \return A pointer to the newly created HashTable or NULL in case of a memory error
-HashTable *hash_table_create(hash_function hash_function) {
+HashTable *hash_table_create(hash_function hash_function, size_t argument_count) {
     HashTable *result = malloc(sizeof(HashTable));
 
     for (size_t i = 0; i < TABLE_SIZE; ++i) {
@@ -1165,6 +1168,7 @@ HashTable *hash_table_create(hash_function hash_function) {
     }
 
     result->hash_function = hash_function;
+    result->argument_count = argument_count;
 
     return result;
 }
@@ -1178,12 +1182,12 @@ void hash_table_print(HashTable *hash_table) {
     }
 }
 
-/// Adds a given value to the hash table, using the defined hash function
+/// Adds a given value to the hash table, using the defined hash function and using the specified parameters
 /// \param hash_table The HashTable to use
-/// \param value The value to insert
-void hash_table_add(HashTable *hash_table, int value) {
-    size_t row_index = hash_table->hash_function(value);
-    add_to_linked_list(hash_table->rows[row_index], value);
+/// \param parameters The parameters, the first element being the value to insert
+void hash_table_add(HashTable *hash_table, const int *parameters) {
+    size_t row_index = hash_table->hash_function(parameters);
+    add_to_linked_list(hash_table->rows[row_index], parameters[0]);
 }
 
 
