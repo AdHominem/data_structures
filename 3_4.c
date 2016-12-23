@@ -1,6 +1,9 @@
 #include "algorithms.h"
 #include <time.h>
 
+#define SIZE 1000
+#define SIZE_TO_SEARCH 100
+
 int binary_search_modified(const int *array, const size_t size, const int number, size_t *iterations) {
 
     size_t last = size;
@@ -22,7 +25,7 @@ int binary_search_modified(const int *array, const size_t size, const int number
     return 0;
 }
 
-int interpolation_search_modified(int *array, size_t size, int key, size_t *iterations) {
+int interpolation_search_modified(const int *array, const size_t size, const int key, size_t *iterations) {
     size_t low = 0;
     size_t high = size - 1;
     size_t middle;
@@ -42,45 +45,47 @@ int interpolation_search_modified(int *array, size_t size, int key, size_t *iter
     return key == array[low];
 }
 
+/// Uses the specified search algorithm so look for a set of values in a larger array
+/// \param algorithm The search algorithm to use
+/// \return The amount of iterations necessary for the search
+size_t test_searching_algorithm(const int array[SIZE], const int to_search[SIZE_TO_SEARCH],
+                                int (*algorithm)(const int*, const size_t, const int, size_t*)) {
+    size_t iterations = 0;
+    for (size_t l = 0; l < SIZE_TO_SEARCH; ++l) {
+        algorithm(array, SIZE, to_search[l], &iterations);
+    }
+
+    return iterations;
+}
+
 int main() {
-    size_t size = 1000;
-    size_t size_to_search = size / 10;
-    int array[size];
+
+    // Generate an array with random values between 0 and 9999
     srand((unsigned) time(NULL));
-    for (size_t i = 0; i < size; ++i) {
+    int array[SIZE];
+    for (size_t i = 0; i < SIZE; ++i) {
         array[i] = rand() % 10000;
     }
 
-    // Chose 100 random values (random because the array is yet to be sorted)
-    int to_search[size_to_search];
-    for (size_t k = 0; k < size_to_search; ++k) {
+    // Determine 100 random values to search for (random because the array is yet to be sorted)
+    int to_search[SIZE_TO_SEARCH];
+    for (size_t k = 0; k < SIZE_TO_SEARCH; ++k) {
         to_search[k] = array[k];
     }
 
-    quicksort(array, size);
+    quicksort(array, SIZE);
 
-    size_t iterations = 0;
-    for (size_t l = 0; l < size_to_search; ++l) {
-        binary_search_modified(array, size, to_search[l], &iterations);
-    }
+    size_t iterations = test_searching_algorithm(array, to_search, binary_search_modified);
 
     printf("\nBinary Search:\n");
     printf("Iterations: %zu\n", iterations);
-    printf("Average: %f\n", iterations / (double) size_to_search);
+    printf("Average: %f\n", iterations / (double) SIZE_TO_SEARCH);
 
-    // Chose 100 random values (random because the array is yet to be sorted)
-    for (size_t k = 0; k < size_to_search; ++k) {
-        to_search[k] = rand() % 10000;
-    }
-
-    iterations = 0;
-    for (size_t l = 0; l < size_to_search; ++l) {
-        interpolation_search_modified(array, size, to_search[l], &iterations);
-    }
+    iterations = test_searching_algorithm(array, to_search, interpolation_search_modified);
 
     printf("\nInterpolation:\n");
     printf("Iterations: %zu\n", iterations);
-    printf("Average: %f\n", iterations / (double) size_to_search);
+    printf("Average: %f\n", iterations / (double) SIZE_TO_SEARCH);
 
     return 0;
 }
