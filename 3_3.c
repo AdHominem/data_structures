@@ -1,32 +1,5 @@
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "algorithms.h"
 #include <time.h>
-
-void print_double_array(double *array, size_t length) {
-    for (size_t i = 0; i < length; ++i) {
-        printf("%f ", array[i]);
-    }
-    printf("\n");
-}
-
-void swap_d(double *array, size_t a, size_t b) {
-    double temp = array[a];
-    array[a] = array[b];
-    array[b] = temp;
-}
-
-void bubblesort_d(double *array, size_t length) {
-    if (!length) return;
-
-    for (size_t end_index = length - 1; end_index > 0; --end_index) {
-        for (size_t start_index = 0; start_index < end_index; ++start_index) {
-            if (array[start_index] > array[end_index]) {
-                swap_d(array, start_index, end_index);
-            }
-        }
-    }
-}
 
 int bucketsort_modified(double *array, size_t length) {
 
@@ -85,7 +58,7 @@ int main() {
     }
 
     printf("Generating a list of random doubles in [0, 1):\n");
-    print_double_array(array, size);
+    print_array(array, size, TYPE_DOUBLE);
 
     if (bucketsort_modified(array, size)) {
         perror("An error occurred during memory allocation!");
@@ -93,7 +66,7 @@ int main() {
     }
 
     printf("Sorted:\n");
-    print_double_array(array, size);
+    print_array(array, size, TYPE_DOUBLE);
 
     return 0;
 }
