@@ -296,8 +296,9 @@ int interpolation_search(int *array, size_t size, int key) {
 void quicksort(int *array, size_t size) {
     if (size < 2) return;
 
+    // This part determines the pivot element and places all array elements to the LEFT of the pivot index
+    // which are smaller and all the ones which are bigger to the RIGHT
     int pivot = array[size / 2];
-
     size_t i, j;
     for (i = 0, j = size - 1; ; i++, j--) {
         while (array[i] < pivot) i++;
