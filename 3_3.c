@@ -55,7 +55,8 @@ int main() {
     const size_t size = 100;
     double array[size];
     for (size_t i = 0; i < size; ++i) {
-        array[i] = (double) (rand() - 1) / (double) RAND_MAX;
+        // Values must be < 1 and >= 0
+        array[i] = rand() / ((double) RAND_MAX + 1);
     }
 
     printf("Generating a list of random doubles in [0, 1):\n");
