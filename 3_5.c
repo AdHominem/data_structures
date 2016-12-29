@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
+#include <math.h>
 
 #define STRING_SIZE 5
 
@@ -68,87 +70,34 @@ void print_integer_array(IntegerArray *integerArray) {
 
 // DATA STRUCTURES
 
-typedef struct tree_node TreeNode;
+typedef struct node TreeNode;
 
-typedef struct tree_node_array {
-    size_t length;
-    TreeNode **elements;
-} TreeNodeArray;
-
-struct tree_node {
-    size_t degree;
-    size_t last_key_index;
-    TreeNodeArray *children;
-    IntegerArray *keys;
+struct node {
+    int suffix;
+    size_t suffix_length;
+    TreeNode *children[10];
 };
 
 typedef struct tree {
     TreeNode *root;
-    size_t degree;
 } Tree;
-
-// CONSTRUCTORS AND DESTRUCTORS
-
-/// Destroy a given node array
-/// \param nodeArray The node array to destroy
-/// \return NULL
-TreeNodeArray *destroy_node_array(TreeNodeArray *nodeArray) {
-    if (nodeArray) {
-        free(nodeArray->elements);
-    }
-    free(nodeArray);
-    return NULL;
-}
-
-/// Creates an array of nodes with a given length
-/// \param length The length of the array
-/// \return A pointer to the new array or NULL if memory allocation failed
-TreeNodeArray *create_node_array(size_t length) {
-    TreeNodeArray *result = malloc(sizeof(TreeNodeArray));
-    if (result == NULL) {
-        return NULL;
-    }
-
-    result->elements = calloc(length, sizeof(TreeNode));
-    if (result->elements == NULL) {
-        return destroy_node_array(result);
-    }
-
-    result->length = length;
-
-    return result;
-}
-
-/// Destroys a node and its child nodes recursively
-/// \param node The node to destroy
-/// \return A NULL pointer to clean up the node pointer
-TreeNode *destroy_tree_nodes_recursively(TreeNode *node) {
-    if (node) {
-        node->keys = destroy_integer_array(node->keys);
-        node->children = destroy_node_array(node->children);
-    }
-    free(node);
-    return NULL;
-}
 
 /// Creates a new node of given degree
 /// \param degree The degree of the node
 /// \return A pointer to the new node or NULL in case of memory allocation failure
-TreeNode *create_tree_node(size_t degree) {
+TreeNode *create_tree_node(int suffix, size_t suffix_length) {
 
     TreeNode *result = malloc(sizeof(TreeNode));
     if (result == NULL) {
         return NULL;
     }
 
-    result->keys = create_integer_array(degree - 1);
-    result->children = create_node_array(degree);
-    if (result->keys == NULL || result->children == NULL) {
-        return destroy_tree_nodes_recursively(result);
+    for (int i = 0; i < 10; ++i) {
+        result->children[i] = NULL;
     }
 
-    result->degree = degree;
-    result->last_key_index = 0;
+    result->suffix = suffix;
+    result->suffix_length = suffix_length;
 
     return result;
 }
@@ -156,185 +105,69 @@ TreeNode *create_tree_node(size_t degree) {
 /// Creates a new n-ary tree
 /// \param degree The degree
 /// \return A pointer to the new tree or NULL in case of memory error or if the degree is invalid (lower than 2)
-Tree *create_tree(size_t degree) {
-    if (degree < 2) {
-        return NULL;
-    }
-
+Tree *create_tree() {
     Tree *result = malloc(sizeof(Tree));
     if (result == NULL) {
         return NULL;
     }
-
-    result->root = NULL;
-    result->degree = degree;
+    result->root = create_tree_node(0, 0);
     return result;
 }
 
-/// Destroys the tree, recursively destroying its nodes
-/// \param tree The tree to destroy
-/// \return A NULL pointer to clean up the tree pointer
-Tree *destroy_tree(Tree *tree) {
-    if (tree) {
-        tree->root = destroy_tree_nodes_recursively(tree->root);
+/// \param a First number
+/// \param b Second number
+/// \param length Pointer to the length of the longest common suffix
+/// \return The longest shared suffix of both numbers or -1 if they don't have any
+int longest_common_suffix(int a, int b, size_t *length) {
+
+    size_t longest_common_suffix_length = 0;
+
+    // when they have no common suffix at all
+    if (a % 10 != b % 10) {
+        *length = longest_common_suffix_length;
+        return -1;
     }
-    free(tree);
-    return NULL;
+
+    int result = 0;
+    size_t exponent = 0;
+
+    while (exponent < STRING_SIZE && a % 10 == b % 10) {
+        result += ((a % 10) * pow(10, exponent));
+        a /= 10;
+        b /= 10;
+        ++longest_common_suffix_length;
+        ++exponent;
+    }
+
+    *length = longest_common_suffix_length;
+    return result;
 }
 
-// FUNCTIONS
+void add_internal(TreeNode *node, int suffix, size_t suffix_length) {
+    // get last digit of suffix
+    int last = suffix % 10;
+    // determine the responsible child node
+    // see if this node exists
+    TreeNode *child = node->children[last];
+    if (child) {
+        int suffix_of_child = child->suffix;
+        size_t lcs_length;
+        int lcs = longest_common_suffix(suffix, suffix_of_child, &lcs_length);
+        printf("Child node exists, lcs is %d\n", lcs);
 
-/// Prints tree_node keys, also showing how many of the key slots are still unset
-/// \param node The node whose keys are to be printed
-void print_tree_node_keys(TreeNode *node) {
-    printf("[");
-    for (size_t j = 0; j < node->keys->length; ++j) {
-        if (j < node->last_key_index) {
-            printf("%d", node->keys->elements[j]);
+        if (lcs == suffix_of_child) {
+            add_internal(child, suffix, suffix_length);
         } else {
-            printf(" ");
+            printf("Need to refactor!\n");
         }
-
-        if (j != node->keys->length - 1) {
-            printf(", ");
-        }
-    }
-    printf("]\n");
-}
-
-/// Checks in which child tree_node the value may fit, or if it fits inside the key array.
-/// Will create a new child tree_node if necessary.
-/// \param node The node from which to start insertion
-/// \param value The value to insert
-/// \return 0 if insertion was successful or 1 if creating a new node was impossible due to memory error and 2 if the
-/// given node was NULL and 3 if the function terminates unexpectedly
-int add_to_tree_internal(TreeNode *node, int value) {
-
-    if (!node) {
-        return 2;
-    }
-
-    for (size_t i = 0; i < node->degree - 1; i++) {
-
-        if (i == node->last_key_index) {
-            node->keys->elements[i] = value;
-            node->last_key_index += 1;
-            return 0;
-        }
-        else if (node->keys->elements[i] >= value) {
-            if (node->children->elements[i] != NULL) {
-                return add_to_tree_internal(node->children->elements[i], value);
-            }
-            else {
-                node->children->elements[i] = create_tree_node(node->degree);
-                if (node->children->elements[i] == NULL) {
-                    return 1;
-                }
-                node->children->elements[i]->keys->elements[0] = value;
-                node->children->elements[i]->last_key_index += 1;
-                return 0;
-            }
-        }
-        else if (i == node->degree - 2){
-            if (node->children->elements[i + 1] != NULL) {
-                return add_to_tree_internal(node->children->elements[i + 1], value);
-            } else {
-                node->children->elements[i + 1] = create_tree_node(node->degree);
-                if (node->children->elements[i + 1] == NULL) {
-                    return 1;
-                }
-                node->children->elements[i + 1]->keys->elements[0] = value;
-                node->children->elements[i + 1]->last_key_index += 1;
-                return 0;
-            }
-        }
-    }
-
-    return 3;
-}
-
-/// Adds a new value to the tree and creates a root tree_node if the tree is empty
-/// \param tree The tree to extend
-/// \param value The value to insert
-/// \return 0 if insertion was successful, else 1 in case of memory error
-int add_to_tree(Tree *tree, int value) {
-    if (tree->root == NULL) {
-        tree->root = create_tree_node(tree->degree);
-        if (tree->root == NULL) {
-            return 1;
-        }
-        tree->root->keys->elements[0] = value;
-        tree->root->last_key_index = 1;
     } else {
-        if (add_to_tree_internal(tree->root, value)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-/// Prints all the nodes recursively, indenting them for better readability
-/// \param node The node to start printing from
-/// \param depth The depth of printing, this should be 1 initially
-void print_tree_nodes(TreeNode *node, size_t depth){
-    if (node) {
-        for (size_t key_index = 0; key_index < node->last_key_index; key_index++) {
-            if (node->children->elements[key_index] != NULL) {
-                print_tree_nodes(node->children->elements[key_index], depth + 1);
-            }
-        }
-
-        for (size_t indentations = 1; indentations < depth; indentations++) {
-            printf("\t");
-        }
-
-        print_tree_node_keys(node);
-
-        if (node->children->elements[node->degree - 1]) {
-            print_tree_nodes(node->children->elements[node->degree - 1], depth + 1);
-        }
+        // if not, insert value as a new node with suffix of value
+        node->children[last] = create_tree_node(suffix, suffix_length);
     }
 }
 
-/// Prints all the nodes of a tree recursively, indenting them for better readability
-/// \param tree The tree to print
-void print_tree(Tree *tree) {
-    print_tree_nodes(tree->root, 1);
-}
-
-// Returns a pointer to the containing TreeNode or NULL, if value not in graph
-TreeNode *search(Tree *tree, int value) {
-
-    TreeNode *current_node = tree->root;
-    int original_value = value;
-
-    for (int i = 0; i < STRING_SIZE; ++i) {
-        int last_digit = value % 10;
-        value /= 10;
-        current_node = current_node->children->elements[last_digit];
-    }
-    return original_value == current_node->keys->elements[0] ? current_node : NULL;
-}
-
-void add(TreeNode *node, int value) {
-    if (!value) return;
-
-    int digit = value % 10;
-    value /= 10;
-
-    if (!node->children->elements[digit]) {
-        node->children->elements[digit] = create_tree_node(node->degree);
-    }
-
-    node->keys->elements[digit] = digit;
-    printf("%d ", node->keys->elements[digit]);
-    add(node->children->elements[digit], value);
-
-}
-
-void add_root(Tree *tree, int value) {
-    tree->root = create_tree_node(tree->degree);
-    add(tree->root, value);
+void add(Tree *tree, int value, size_t value_length) {
+    add_internal(tree->root, value, value_length);
 }
 
 // height of trie is the length of the longest key
@@ -342,11 +175,25 @@ void add_root(Tree *tree, int value) {
 // If a node is a leaf, it has just one key
 int main() {
     // alphabet: 0,1,2,3,4,5,6,7,8,9
-    // height: 2
-    Tree *tree = create_tree(10);
-    add_root(tree, 42);
-    add(tree->root, 12);
-    print_tree(tree);
+    Tree *tree = create_tree();
+    assert(tree->root->suffix == 0);
+    assert(tree->root->suffix_length == 0);
+    for (int i = 0; i < 10; ++i) {
+        assert(tree->root->children[i] == NULL);
+    }
+
+    add(tree, 15, 2);
+    assert(tree->root->children[5]->suffix == 15);
+
+    size_t length;
+    assert(longest_common_suffix(15, 315, &length) == 15);
+    assert(length == 2);
+    assert(longest_common_suffix(25, 315, &length) == 5);
+    assert(length == 1);
+    assert(longest_common_suffix(17, 315, &length) == -1);
+    assert(length == 0);
+
+    add(tree, 315, 3);
 
     return 0;
 }
