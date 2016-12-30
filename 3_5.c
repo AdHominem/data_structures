@@ -114,6 +114,8 @@ Tree *create_tree() {
     return result;
 }
 
+/// For two numbers, returns the longest consecutive sequence of digits starting from the end (thus suffix)
+/// The length parameter is necessary to denote trailing zeroes (1001 and 2001 have a lcs of 001 which has length 3)
 /// \param a First number
 /// \param b Second number
 /// \param length Pointer to the length of the longest common suffix
@@ -143,7 +145,7 @@ int longest_common_suffix(int a, int b, size_t *length) {
     return result;
 }
 
-void add_internal(TreeNode *node, int suffix, size_t suffix_length) {
+void add_internal_optimized(TreeNode *node, int suffix, size_t suffix_length) {
     // get last digit of suffix
     int last = suffix % 10;
     // determine the responsible child node
@@ -156,7 +158,7 @@ void add_internal(TreeNode *node, int suffix, size_t suffix_length) {
         printf("Child node exists, lcs is %d\n", lcs);
 
         if (lcs == suffix_of_child) {
-            add_internal(child, suffix, suffix_length);
+            add_internal_optimized(child, suffix, suffix_length);
         } else {
             printf("Need to refactor!\n");
         }
@@ -166,8 +168,59 @@ void add_internal(TreeNode *node, int suffix, size_t suffix_length) {
     }
 }
 
+void add_internal(TreeNode *node, int value, size_t depth) {
+
+    // Get the last digit of the value, according to its depth
+    int last_digit = value / (int) pow(10, depth) % 10;
+
+    if (node->children[last_digit] == NULL) {
+        if (depth < 4) {
+            node->children[last_digit] = create_tree_node(last_digit, 1);
+            add_internal(node->children[last_digit], value, depth + 1);
+        } else {
+            node->children[last_digit] = create_tree_node(value, 5);
+        }
+    } else {
+        add_internal(node->children[last_digit], value, depth + 1);
+    }
+}
+
 void add(Tree *tree, int value, size_t value_length) {
-    add_internal(tree->root, value, value_length);
+    add_internal(tree->root, value, 0);
+}
+
+void add_optimized(Tree *tree, int value, size_t value_length) {
+    add_internal_optimized(tree->root, value, value_length);
+}
+
+void print_tree_node_keys(TreeNode *node) {
+    printf("Suffix: %05d\n", node->suffix);
+}
+
+/// Prints all the nodes recursively, indenting them for better readability
+/// \param node The node to start printing from
+/// \param depth The depth of printing, this should be 1 initially
+void print_tree_nodes(TreeNode *node, size_t depth){
+    if (node) {
+
+        for (size_t indentations = 1; indentations < depth; indentations++) {
+            printf("\t");
+        }
+
+        // print own
+        print_tree_node_keys(node);
+
+        // call this on all children
+        for (size_t i = 0; i < 10; i++) {
+            print_tree_nodes(node->children[i], depth + 1);
+        }
+    }
+}
+
+/// Prints all the nodes of a tree recursively, indenting them for better readability
+/// \param tree The tree to print
+void print_tree(Tree *tree) {
+    print_tree_nodes(tree->root, 1);
 }
 
 // height of trie is the length of the longest key
@@ -182,8 +235,12 @@ int main() {
         assert(tree->root->children[i] == NULL);
     }
 
-    add(tree, 15, 2);
-    assert(tree->root->children[5]->suffix == 15);
+    add_optimized(tree, 15, 5);
+    add_optimized(tree, 315, 5);
+    add_optimized(tree, 415, 5);
+    add_optimized(tree, 25, 5);
+    add_optimized(tree, 10025, 5);
+    print_tree(tree);
 
     size_t length;
     assert(longest_common_suffix(15, 315, &length) == 15);
@@ -193,7 +250,9 @@ int main() {
     assert(longest_common_suffix(17, 315, &length) == -1);
     assert(length == 0);
 
-    add(tree, 315, 3);
+
+
+
 
     return 0;
 }
