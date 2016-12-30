@@ -1,6 +1,10 @@
 #include <time.h>
 #include "data_structures.h"
 
+/// Randomly links two nodes in both the adjacency list and the matrix
+/// This relies on the list having NODES_COUNT entries!
+/// \param list The adjacency list
+/// \param matrix The matrix
 void link_random(AdjacencyList *list, int matrix[NODES_COUNT][NODES_COUNT]) {
     srand((unsigned int) time(NULL));
 
@@ -15,6 +19,8 @@ void link_random(AdjacencyList *list, int matrix[NODES_COUNT][NODES_COUNT]) {
     }
 }
 
+/// Pretty prints a matrix with rows an columns numbered 0 to exclusive 20
+/// \param matrix The matrix
 void print_matrix(int matrix[NODES_COUNT][NODES_COUNT]) {
     printf("    ");
     for (int i = 0; i < NODES_COUNT; ++i) {
@@ -33,7 +39,7 @@ void print_matrix(int matrix[NODES_COUNT][NODES_COUNT]) {
 
 int main() {
 
-    printf("Created a random graph!\n");
+    printf("Created a random graph!\n\n");
 
     AdjacencyList *graph = create_alist();
     if (graph == NULL) {
@@ -49,7 +55,11 @@ int main() {
     }
 
     link_random(graph, matrix);
+
+    printf("Adjacency list: \n");
     print_alist(graph);
     destroy_alist(graph);
+
+    printf("Adjacency matrix: \n");
     print_matrix(matrix);
 }

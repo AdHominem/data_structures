@@ -9,14 +9,13 @@
  * Contains:
  *
  * - Linked List
- *      A basic linked list with integer nodes
  * - Integer Array
- *      A wrapper class for an integer array plus its size
  * - Tree
- *      A generic n-ary tree without rebalancing and node removal
  * - Binary Tree
- *      A non-balancing binary tree
+ * - B-Tree
+ * - Hash Table
  */
+
 
 /* ### LINKED LIST ### */
 
@@ -471,10 +470,10 @@ void print_tree(Tree *tree) {
     print_tree_nodes(tree->root, 1);
 }
 
-///
-/// \param node
-/// \param value
-/// \return
+/// Checks if a given value is contained by a node or its child nodes
+/// \param node The node to start searching at
+/// \param value The value to search for
+/// \return A pointer to the found node or NULL if the value is not found
 TreeNode *search_in_tree_internal(TreeNode *node, int value) {
 
     if (!node) {
@@ -487,13 +486,11 @@ TreeNode *search_in_tree_internal(TreeNode *node, int value) {
         if (node->keys->elements[i] == value) {
             return node;
         }
-
-            // Else check if it's too small to fit, so we need to go down the left subtree
+        // Else check if it's too small to fit, so we need to go down the left subtree
         else if (value < node->keys->elements[i]) {
             return search_in_tree_internal(node->children->elements[i], value);
         }
-
-            // Else check if we are at the last key
+        // Else check if we are at the last key
         else if (i == node->degree - 2) {
             // Now value is bigger than the last element and could only be in the right child
             // Only the last key in the array can have a right child
@@ -503,7 +500,10 @@ TreeNode *search_in_tree_internal(TreeNode *node, int value) {
     return NULL;
 }
 
-// Returns a pointer to the containing TreeNode or NULL, if value not in graph
+/// Checks if a given value is in a tree
+/// \param tree The tree in which to search
+/// \param value The value to search for
+/// \return A pointer to the found node or NULL if the value is not found
 TreeNode *search_in_tree(Tree *tree, int value) {
     return search_in_tree_internal(tree->root, value);
 }
@@ -1093,10 +1093,6 @@ void b_tree_print(BTree *tree) {
     b_tree_nodes_print(tree->root, 1);
 }
 
-///
-/// \param node
-/// \param value
-/// \return
 BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
 
     if (!node) {
@@ -1129,6 +1125,71 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
 BTreeNode *b_tree_search(BTree *tree, int value) {
     return b_tree_search_internal(tree->root, value);
 }
+
+
+/* ### HASH TABLE ### */
+
+#define TABLE_SIZE 128
+
+// DATA STRUCTURES
+
+typedef size_t (*hash_function)(const int *);
+
+typedef struct hash_table {
+    LinkedList *rows[TABLE_SIZE];
+    hash_function hash_function;
+    size_t argument_count;
+} HashTable;
+
+// CONSTRUCTORS AND DESTRUCTORS
+
+HashTable *hash_table_destroy(HashTable *hash_table) {
+    if (hash_table) {
+        for (size_t i = 0; i < TABLE_SIZE; ++i) {
+            hash_table->rows[i] = destroy_linked_list(hash_table->rows[i]);
+        }
+    }
+    free(hash_table);
+    return NULL;
+}
+
+/// Creates a new hash table using the specified hash function
+/// \param hash_function Hash function which maps an int array of params to a size_t. The first element is expected
+/// to be the value to hash, the others are further arguments if needed
+/// \return A pointer to the newly created HashTable or NULL in case of a memory error
+HashTable *hash_table_create(hash_function hash_function, size_t argument_count) {
+    HashTable *result = malloc(sizeof(HashTable));
+
+    for (size_t i = 0; i < TABLE_SIZE; ++i) {
+        result->rows[i] = create_linked_list();
+        if (!result->rows[i]) {
+            return hash_table_destroy(result);
+        }
+    }
+
+    result->hash_function = hash_function;
+    result->argument_count = argument_count;
+
+    return result;
+}
+
+// FUNCTIONS
+
+void hash_table_print(HashTable *hash_table) {
+    for (size_t i = 0; i < TABLE_SIZE; ++i) {
+        printf("%zu: ", i);
+        print_linked_list(hash_table->rows[i]);
+    }
+}
+
+/// Adds a given value to the hash table, using the defined hash function and using the specified parameters
+/// \param hash_table The HashTable to use
+/// \param parameters The parameters, the first element being the value to insert
+void hash_table_add(HashTable *hash_table, const int *parameters) {
+    size_t row_index = hash_table->hash_function(parameters);
+    add_to_linked_list(hash_table->rows[row_index], parameters[0]);
+}
+
 
 
 #endif

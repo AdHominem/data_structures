@@ -1,32 +1,58 @@
-#include <stdio.h>
-#include "input.h"
+#include "algorithms.h"
 #include "data_structures.h"
+#include <stdio.h>
 
-typedef struct my {
-    size_t length;
-    char copy;
-    char name[5];
-    int *array;
-} MY;
+/// Tests if the sorting algorithm works with arbitrary arrays, zero length arrays and already sorted ones.
+/// \param sort The sorting algorithm
+/// \return 1 in case of a mistake
+int test_sorting(void (*sort)(int *, size_t)) {
+    size_t size = 7;
+    int ints_sorted[] = {-4, 0, 1, 4, 7, 12, 18};
+    int ints[] = {4,7,18,-4,0,12,1};
 
-MY *create_my(size_t length, char name[5]) {
-    MY *result = malloc(sizeof(MY));
-    result->length = length;
-    result->copy = 'a';
-    result->array = calloc(length, sizeof(int));
-    memset(result->array, 42, length * sizeof(int));
-    result->name[0] = 'h';
-    return result;
+    sort(ints, size);
+
+    for (size_t i = 0; i < size; ++i) {
+        if (ints[i] != ints_sorted[i]) {
+            printf("Test failed!\n");
+            print_array(ints, size, TYPE_INT);
+            return 1;
+        }
+    }
+    printf("Test arbitrary array successful!\n");
+
+    size = 0;
+    int ints_empty[] = {};
+
+    sort(ints_empty, size);
+    printf("Test zero length array successful!\n");
+
+
+    size = 7;
+    int ints_sorted_again[] = {-4, 0, 1, 4, 7, 12, 18};
+    int ints_sorted_too[] = {-4, 0, 1, 4, 7, 12, 18};
+
+    sort(ints_sorted_again, size);
+
+    for (size_t i = 0; i < size; ++i) {
+        if (ints_sorted_again[i] != ints_sorted_too[i]) {
+            printf("Test already sorted failed!\n");
+            print_array(ints_sorted_again, size, TYPE_INT);
+            return 1;
+        }
+    }
+
+    printf("All tests successful!\n");
+
+    return 0;
 }
 
 int main() {
-    //MY *my = create_my(5, "Mine!");
-    int a = 10;
-    char b = 'a';
-    char string[] = "Hello";
-    int array[] = {1,2,3};
-    return 1;
 
+    size_t size = 7;
+    int ints[] = {-4, 0, 1, 4, 7, 12, 18};
+
+    test_sorting(mergesort);
 
 }
 
