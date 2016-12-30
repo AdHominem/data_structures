@@ -135,6 +135,44 @@ int insert_at_linked_list(LinkedList *list, int value, size_t index) {
     return 0;
 }
 
+/// Assumes that the Linked List is already sorted and inserts at the first fitting place
+/// \param list The list to insert into
+/// \param value The value to insert
+/// \return 0 if insertion was successful and 1 if memory allocation failed
+int linked_list_add_sorted(LinkedList *list, int value) {
+
+    LinkedListNode *to_insert = create_linked_list_node(value);
+    if (to_insert == NULL) {
+        return 1;
+    }
+
+    LinkedListNode *current_node = list->head;
+
+    // Catch empty list and append to front case
+    if (current_node == NULL || current_node->value > value) {
+        to_insert->next = current_node;
+        list->head = to_insert;
+    } else {
+        LinkedListNode *precursor = NULL;
+
+        for (size_t i = 0; i < length_of_(list); ++i) {
+
+            precursor = current_node;
+            current_node = current_node->next;
+
+            // current node is NULL? Then we are at the end and the value to insert is the largest in the list
+            // or is the current value larger than our value? then we can insert too
+            if (current_node == NULL || current_node->value > value) {
+                to_insert->next = current_node;
+                precursor->next = to_insert;
+                break;
+            }
+            // if not, move further in the list
+        }
+    }
+    return 0;
+}
+
 /// Wrapper for insert_at_linked_list() to append a value to the end
 /// \param list The target list
 /// \param value The value to append
