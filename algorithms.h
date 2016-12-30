@@ -3,9 +3,8 @@
 #define TYPE_INT "TYPE_INT"
 #define TYPE_DOUBLE "TYPE_DOUBLE"
 
+#include "data_structures.h"
 #include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 
@@ -211,46 +210,46 @@ void bubblesort_d(double *array, size_t length) {
     }
 }
 
-//O(n)
-int bucketsort(double *array, size_t length) {
+int bucketsort(int *array, const size_t length) {
 
-    typedef struct bucket {
-        size_t count;
-        double *values;
-    } Bucket;
-
-    Bucket buckets[length];
-
+    // Initialize buckets
+    LinkedList *buckets[length];
     for (size_t i = 0; i < length; i++) {
-        buckets[i].count = 0;
-        buckets[i].values = malloc(length * sizeof(double));
-        if (!buckets[i].values) {
+        buckets[i] = create_linked_list();
+        if (buckets[i] == NULL) {
             for (size_t j = 0; j < i; ++j) {
-                free(buckets[j].values);
+                destroy_linked_list(buckets[j]);
             }
             return 1;
         }
     }
 
+    // Put elements in buckets
     for (size_t i = 0; i < length; i++) {
-        Bucket *relevant_bucket = &buckets[(size_t) (length * array[i])];
-        relevant_bucket->values[relevant_bucket->count] = array[i];
-        ++relevant_bucket->count;
+        LinkedList *relevant_bucket = buckets[(size_t) (length * array[i])];
+        add_to_linked_list(relevant_bucket, array[i]);
     }
 
+    // Sort all buckets and insert them into the array
     size_t array_index = 0;
+    size_t biggest_bucket = 0;
     for (size_t bucket_index = 0; bucket_index < length; ++bucket_index) {
-        Bucket *current_bucket = &buckets[bucket_index];
-        bubblesort_d(current_bucket->values, current_bucket->count);
 
-        for (size_t value_index = 0; value_index < current_bucket->count; value_index++) {
-            array[array_index + value_index] = current_bucket->values[value_index];
+        // Get bucket as array and sort it
+        LinkedList *current_bucket = buckets[bucket_index];
+        size_t bucket_size = length_of_(current_bucket);
+        int bucket_as_array[bucket_size];
+        linked_list_as_array(current_bucket, bucket_as_array);
+        bubblesort(bucket_as_array, bucket_size);
+
+        // Append the sorted bucket to the array
+        for (size_t value_index = 0; value_index < bucket_size; value_index++) {
+            array[array_index + value_index] = bucket_as_array[value_index];
         }
 
-        array_index += current_bucket->count;
-        free(current_bucket->values);
+        array_index += bucket_size;
+        destroy_linked_list(current_bucket);
     }
-
     return 0;
 }
 
