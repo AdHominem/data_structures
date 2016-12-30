@@ -173,6 +173,19 @@ int linked_list_add_sorted(LinkedList *list, int value) {
     return 0;
 }
 
+/// Turns a linked list into an array
+/// \param list The list
+/// \param array The array to hold the list values
+void linked_list_as_array(LinkedList *list, int *array) {
+
+    LinkedListNode *node = list->head;
+
+    for (size_t i = 0; i < length_of_(list); ++i) {
+        array[i] = node->value;
+        node = node->next;
+    }
+}
+
 /// Wrapper for insert_at_linked_list() to append a value to the end
 /// \param list The target list
 /// \param value The value to append
