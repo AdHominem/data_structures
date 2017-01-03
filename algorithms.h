@@ -255,18 +255,19 @@ int bucketsort(int *array, const size_t length) {
 
 int binary_search(const int *array, const size_t size, const int number) {
 
-    size_t last = size;
-    size_t first = 0;
+    size_t upper_bound = size - 1;
+    size_t lower_bound = 0;
 
-    while (first <= last) {
-        size_t middle = first + (last - first) / 2;
+    while (lower_bound <= upper_bound) {
+
+        size_t middle = (lower_bound + upper_bound) / 2;
 
         if (number == array[middle]) {
             return 1;
         } else if (number > array[middle]) {
-            first = middle + 1;
+            lower_bound = middle + 1;
         } else {
-            last = middle - 1;
+            upper_bound = middle - 1;
         }
     }
 
