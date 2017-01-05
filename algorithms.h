@@ -319,4 +319,73 @@ void quicksort(int *array, size_t size) {
     quicksort(array + i, size - i);
 }
 
+
+/* TESTING */
+
+void test_search_algorithm(int (*algorithm)(const int *, const size_t, const int, size_t *)) {
+    int a[] = {0,1,2,3,4,5,6,7,8,9};
+    size_t iter;
+    assert(algorithm(a, 10, -1, &iter) == 0);
+    assert(algorithm(a, 10, 10, &iter) == 0);
+    assert(algorithm(a, 10, 0, &iter));
+    assert(algorithm(a, 10, 9, &iter));
+
+    int b[] = {0};
+    assert(algorithm(b, 1, -1, &iter) == 0);
+    assert(algorithm(b, 1, 2, &iter) == 0);
+    assert(algorithm(b, 1, 0, &iter));
+
+    int c[] = {};
+    assert(algorithm(b, 0, -1, &iter) == 0);
+    assert(algorithm(b, 0, 0, &iter) == 0);
+
+    int d[] = {0,1,2,2,4};
+    assert(algorithm(d, 5, 2, &iter));
+}
+
+/// Tests if the sorting algorithm works with arbitrary arrays, zero length arrays and already sorted ones.
+/// \param sort The sorting algorithm
+/// \return 1 in case of a mistake
+int test_sorting_algorithm(void (*sort)(int *, size_t)) {
+    size_t size = 7;
+    int ints_sorted[] = {-4, 0, 1, 4, 7, 12, 18};
+    int ints[] = {4,7,18,-4,0,12,1};
+
+    sort(ints, size);
+
+    for (size_t i = 0; i < size; ++i) {
+        if (ints[i] != ints_sorted[i]) {
+            printf("Test failed!\n");
+            print_array(ints, size, TYPE_INT);
+            return 1;
+        }
+    }
+    printf("Test arbitrary array successful!\n");
+
+    size = 0;
+    int ints_empty[] = {};
+
+    sort(ints_empty, size);
+    printf("Test zero length array successful!\n");
+
+
+    size = 7;
+    int ints_sorted_again[] = {-4, 0, 1, 4, 7, 12, 18};
+    int ints_sorted_too[] = {-4, 0, 1, 4, 7, 12, 18};
+
+    sort(ints_sorted_again, size);
+
+    for (size_t i = 0; i < size; ++i) {
+        if (ints_sorted_again[i] != ints_sorted_too[i]) {
+            printf("Test already sorted failed!\n");
+            print_array(ints_sorted_again, size, TYPE_INT);
+            return 1;
+        }
+    }
+
+    printf("All tests successful!\n");
+
+    return 0;
+}
+
 #endif
