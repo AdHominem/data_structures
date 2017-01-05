@@ -253,7 +253,7 @@ int bucketsort(int *array, const size_t length) {
     return 0;
 }
 
-int binary_search_modified(const int *array, const size_t size, const int number) {
+int binary_search(const int *array, const size_t size, const int number) {
 
     int upper_bound = (int) size - 1;
     int lower_bound = 0;
@@ -274,7 +274,7 @@ int binary_search_modified(const int *array, const size_t size, const int number
     return 0;
 }
 
-int interpolation_search_modified(const int *array, const size_t size, const int key) {
+int interpolation_search(const int *array, const size_t size, const int key) {
 
     if (size == 0) {
         return 0;
