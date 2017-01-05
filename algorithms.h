@@ -253,20 +253,20 @@ int bucketsort(int *array, const size_t length) {
     return 0;
 }
 
-int binary_search(const int *array, const size_t size, const int number) {
+int binary_search_modified(const int *array, const size_t size, const int number) {
 
-    size_t upper_bound = size - 1;
-    size_t lower_bound = 0;
+    int upper_bound = (int) size - 1;
+    int lower_bound = 0;
 
     while (lower_bound <= upper_bound) {
 
-        size_t middle = (lower_bound + upper_bound) / 2;
+        int middle = lower_bound + (upper_bound - lower_bound) / 2;
 
         if (number == array[middle]) {
             return 1;
         } else if (number > array[middle]) {
             lower_bound = middle + 1;
-        } else {
+        } else /*if (number < array[middle]) */ {
             upper_bound = middle - 1;
         }
     }
@@ -274,23 +274,31 @@ int binary_search(const int *array, const size_t size, const int number) {
     return 0;
 }
 
-int interpolation_search(int *array, size_t size, int key) {
-    size_t low = 0;
-    size_t high = size - 1;
-    size_t middle;
+int interpolation_search_modified(const int *array, const size_t size, const int key) {
 
-    while (array[high] != array[low] && key >= array[low] && key <= array[high]) {
-        middle = low + ((key - array[low]) * (high - low) / (array[high] - array[low]));
+    if (size == 0) {
+        return 0;
+    }
+
+    int lower_bound = 0;
+    int upper_bound = (int) size - 1;
+    int middle;
+
+    while (array[upper_bound] != array[lower_bound]
+           && key >= array[lower_bound]
+           && key <= array[upper_bound]) {
+        middle = lower_bound + ((key - array[lower_bound]) * (upper_bound - lower_bound)
+                                / (array[upper_bound] - array[lower_bound]));
         if (array[middle] < key) {
-            low = middle + 1;
+            lower_bound = middle + 1;
         } else if (key < array[middle]) {
-            high = middle - 1;
+            upper_bound = middle - 1;
         } else {
             return 1;
         }
     }
 
-    return key == array[low];
+    return key == array[lower_bound];
 }
 
 void quicksort(int *array, size_t size) {
