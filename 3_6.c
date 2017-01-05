@@ -1,10 +1,17 @@
-
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
 
 #define TABLE_SIZE 128
 
+typedef struct llnode LinkedListNode;
+struct llnode {
+    int value;
+    LinkedListNode *next;
+};
+typedef struct llist {
+    LinkedListNode *head;
+} LinkedList;
 typedef size_t (*hash_function)(const int *);
 typedef struct hash_table {
     LinkedList *rows[TABLE_SIZE];
@@ -12,6 +19,12 @@ typedef struct hash_table {
     size_t argument_count;
 } HashTable;
 
+size_t get_max_chain_length(int input[TABLE_SIZE], size_t (*hash_function)(const int *), int *hash_parameters) ;
+size_t hash_modulo(const int *parameters) ;
+size_t hash_universal(const int *parameters) ;
+HashTable *hash_table_destroy(HashTable *hash_table) ;
+void hash_table_add(HashTable *hash_table, const int *parameters) ;
+HashTable *hash_table_create(hash_function hash_function, size_t argument_count) ;
 
 int main() {
     srand((unsigned) time(NULL));
@@ -66,8 +79,157 @@ int main() {
 
     printf("Average maximum chain length (universal hashing): %lf\n",
            sum_of_maximum_chain_lengths / (double) attempts);
+
     printf("Longest chain was: %zu\n", maximum_chain_length);
 
+    return 0;
+}
+
+LinkedListNode *create_linked_list_node(int value) {
+    LinkedListNode *result = malloc(sizeof(LinkedListNode));
+    if (result == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
+
+    result->value = value;
+    result->next = NULL;
+
+    return result;
+}
+
+LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
+    if (node) {
+        node->next = destroy_nodes_recursively(node->next);
+    }
+    free(node);
+    return NULL;
+}
+
+LinkedList *create_linked_list() {
+    return calloc(1, sizeof(LinkedList));
+}
+
+LinkedList *destroy_linked_list(LinkedList *list) {
+    if (list) {
+        list->head = destroy_nodes_recursively(list->head);
+    }
+    free(list);
+    return NULL;
+}
+
+size_t length_of_(LinkedList *list) {
+    LinkedListNode *head = list->head;
+    size_t result = 0;
+
+    while (head != NULL) {
+        head = head->next;
+        ++result;
+    }
+
+    return result;
+}
+
+int insert_at_linked_list(LinkedList *list, int value, size_t index) {
+
+    // Catch index out of range
+    if (index > length_of_(list)) {
+        perror("List index out of range!");
+        return 2;
+    }
+
+    LinkedListNode *head = list->head;
+    LinkedListNode *to_insert = create_linked_list_node(value);
+    if (to_insert == NULL) {
+        return 1;
+    }
+
+    // Catch append to front case
+    // Else insert normally
+    if (index == 0) {
+        to_insert->next = head;
+        list->head = to_insert;
+    } else {
+        LinkedListNode *before = head;
+
+        for (size_t i = 0; i < index; ++i) {
+            before = head;
+            head = head->next;
+        }
+
+        before->next = to_insert;
+        to_insert->next = head;
+    }
+    return 0;
+}
+
+int linked_list_add_sorted(LinkedList *list, int value) {
+
+    LinkedListNode *to_insert = create_linked_list_node(value);
+    if (to_insert == NULL) {
+        return 1;
+    }
+
+    LinkedListNode *current_node = list->head;
+
+    // Catch empty list and append to front case
+    if (current_node == NULL || current_node->value > value) {
+        to_insert->next = current_node;
+        list->head = to_insert;
+    } else {
+        LinkedListNode *precursor = NULL;
+
+        for (size_t i = 0; i < length_of_(list); ++i) {
+
+            precursor = current_node;
+            current_node = current_node->next;
+
+            // current node is NULL? Then we are at the end and the value to insert is the largest in the list
+            // or is the current value larger than our value? then we can insert too
+            if (current_node == NULL || current_node->value > value) {
+                to_insert->next = current_node;
+                precursor->next = to_insert;
+                break;
+            }
+            // if not, move further in the list
+        }
+    }
+    return 0;
+}
+
+void linked_list_as_array(LinkedList *list, int *array) {
+
+    LinkedListNode *node = list->head;
+
+    for (size_t i = 0; i < length_of_(list); ++i) {
+        array[i] = node->value;
+        node = node->next;
+    }
+}
+
+void add_to_linked_list(LinkedList *list, int value) {
+    insert_at_linked_list(list, value, length_of_(list));
+}
+
+void print_linked_list(LinkedList *list) {
+    LinkedListNode *head = list->head;
+
+    while (head != NULL) {
+        printf("%d ", head->value);
+        head = head->next;
+    }
+
+    printf("\n");
+}
+
+int linked_list_contains(LinkedList *list, int value) {
+    LinkedListNode *current = list->head;
+    while (current) {
+        if (current->value == value) {
+            return 1;
+        }
+        current = current->next;
+    }
     return 0;
 }
 
@@ -75,7 +237,6 @@ size_t hash_modulo(const int *parameters) {
     return (size_t) (parameters[0] % TABLE_SIZE);
 }
 
-// prime 491 is used because its > 128, which is the size of the hash table
 size_t hash_universal(const int *parameters) {
     return ((parameters[1] * (size_t) parameters[0] + parameters[2]) % 491) % TABLE_SIZE;
 }
@@ -102,16 +263,10 @@ size_t get_max_chain_length(int input[TABLE_SIZE], size_t (*hash_function)(const
         maximum_chain_length = (length > maximum_chain_length) ? length : maximum_chain_length;
     }
 
-    //hash_table_print(hash_table);
     hash_table_destroy(hash_table);
 
     return maximum_chain_length;
 }
-
-
-
-
-// CONSTRUCTORS AND DESTRUCTORS
 
 HashTable *hash_table_destroy(HashTable *hash_table) {
     if (hash_table) {
@@ -123,11 +278,7 @@ HashTable *hash_table_destroy(HashTable *hash_table) {
     return NULL;
 }
 
-/// Creates a new hash table using the specified hash function
-/// \param hash_function Hash function which maps an int array of params to a size_t. The first element is expected
-/// to be the value to hash, the others are further arguments if needed
-/// \return A pointer to the newly created HashTable or NULL in case of a memory error
-HashTable *hash_table_create(hash_function hash_function, size_t argument_count) {
+HashTable *hash_table_create(const hash_function hash_function, size_t argument_count) {
     HashTable *result = malloc(sizeof(HashTable));
 
     for (size_t i = 0; i < TABLE_SIZE; ++i) {
@@ -143,8 +294,6 @@ HashTable *hash_table_create(hash_function hash_function, size_t argument_count)
     return result;
 }
 
-// FUNCTIONS
-
 void hash_table_print(HashTable *hash_table) {
     for (size_t i = 0; i < TABLE_SIZE; ++i) {
         printf("%zu: ", i);
@@ -152,9 +301,6 @@ void hash_table_print(HashTable *hash_table) {
     }
 }
 
-/// Adds a given value to the hash table, using the defined hash function and using the specified parameters
-/// \param hash_table The HashTable to use
-/// \param parameters The parameters, the first element being the value to insert
 void hash_table_add(HashTable *hash_table, const int *parameters) {
     size_t row_index = hash_table->hash_function(parameters);
     add_to_linked_list(hash_table->rows[row_index], parameters[0]);
