@@ -48,6 +48,7 @@ int main() {
 
 void measure_performance(const char *name, const int *array, const int *to_search,
                          int (*function)(const int *, const size_t, const int, size_t *)) {
+
     size_t iterations = test_searching_algorithm(array, to_search, function);
 
     printf("\n%s:\n", name);
@@ -55,7 +56,7 @@ void measure_performance(const char *name, const int *array, const int *to_searc
     printf("Average: %f\n", iterations / (double) SIZE_TO_SEARCH);
 }
 
-/// Uses the specified search algorithm so look for a set of values in a larger array
+/// Uses the specified search algorithm so look for a set of SIZE_TO_SEARCH values in a larger array of SIZE
 /// \param algorithm The search algorithm to use
 /// \return The amount of iterations necessary for the search
 size_t test_searching_algorithm(const int array[SIZE], const int to_search[SIZE_TO_SEARCH],
