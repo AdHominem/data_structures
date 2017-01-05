@@ -52,7 +52,20 @@ int main() {
     size_t size = 7;
     int ints[] = {-4, 0, 1, 4, 7, 12, 18};
 
-    test_sorting(mergesort);
+
+    LinkedList *list = create_linked_list();
+
+    print_linked_list(list);
+
+    size_t length = length_of_(list);
+    int array[length];
+    print_array(array, length, TYPE_INT);
+    linked_list_as_array(list, array);
+    print_array(array, length, TYPE_INT);
+
+    destroy_linked_list(list);
+
+    //test_sorting(mergesort);
 
 }
 
