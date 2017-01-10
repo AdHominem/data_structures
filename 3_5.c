@@ -18,62 +18,23 @@ typedef struct tree {
 } Tree;
 
 Tree *create_tree() ;
-void print_tree(Tree *tree) ;
 void add(Tree *tree, int value) ;
 void optimize(Tree *tree) ;
-int tree_search(const Tree *tree, const int value) ;
-
 Tree *tree_destroy(Tree *tree) ;
-
 void tree_count_nodes(const Tree *tree, size_t *count) ;
-
 void test_compression(size_t numbers) ;
 
 int main() {
-    // alphabet: 0,1,2,3,4,5,6,7,8,9
-    Tree *tree = create_tree();
-    assert(tree->root->suffix == 0);
-    assert(tree->root->suffix_length == 0);
-    for (int i = 0; i < 10; ++i) {
-        assert(tree->root->children[i] == NULL);
-    }
-
-    add(tree, 15);
-    add(tree, 315);
-    add(tree, 25);
-
-    assert(tree_search(tree, 15));
-    assert(tree_search(tree, 315));
-    assert(tree_search(tree, 25));
-    assert(tree_search(tree, 0) == 0);
-    assert(tree_search(tree, 5) == 0);
-    assert(tree_search(tree, 1) == 0);
-
-    tree = create_tree();
-
-    add(tree, 15);
-    add(tree, 315);
-    add(tree, 25);
-    optimize(tree);
-
-    assert(tree_search(tree, 15));
-    assert(tree_search(tree, 315));
-    assert(tree_search(tree, 25));
-    assert(tree_search(tree, 0) == 0);
-    assert(tree_search(tree, 5) == 0);
-    assert(tree_search(tree, 1) == 0);
-
     test_compression(100);
     test_compression(500);
     test_compression(1000);
-
     return 0;
 }
 
 void test_compression(size_t numbers) {
     Tree *tree = create_tree();
 
-    // Generate an array with random values between 0 and 9999
+    // Add random values between 0 and 9999 to the tree
     srand((unsigned) time(NULL));
     for (size_t i = 0; i < numbers; ++i) {
         add(tree, rand() % 100000);
@@ -202,8 +163,6 @@ void optimize(Tree *tree) {
         return;
     }
 
-    //printf("Root optimization starts\n");
-
     // do i have just one child?
     size_t children_count = 0;
     for (size_t i = 0; i < 10; ++i) {
@@ -211,45 +170,31 @@ void optimize(Tree *tree) {
             ++children_count;
         }
     }
-    //printf("Root %d (%zu) here, it seems my number of children is %zu\n", node->suffix, node->suffix_length, children_count);
-    // if no, call optimize on all of my children
-    /*
-     * If yes, 
-     *      prepend my child's suffix to mine
-     *      exchange all of my nodes with the ones of my child
-     *      then call optimize on myself again
-     */
+
+    // leaves need not to be optimized
     if (children_count == 0) {
-        //printf("Root %d here, I dont have any children!\n", node->suffix);
         return;
     } else if (children_count == 1) {
-        /*
-         * Swap with child
-         * call optimize on myself
-         */
+        // Swap with child and call optimize on myself
         for (size_t i = 0; i < 10; ++i) {
             if (node->children[i] != NULL) {
                 int former_root_suffix = tree->root->suffix;
                 size_t former_root_suffix_length = tree->root->suffix_length;
                 tree->root = node->children[i];
 
-                // if the child is a leaf (node suffix length will be 4), then just swap. We dont need to update
-                // suffix length (its already 5) and the suffix will be okay too
-
-                // update suffix and suffix_length
+                // if the child is a leaf (node suffix length will be 4), then just swap. We don't need to update
+                // suffix length (it's already 5) and the suffix will be okay too
                 if (former_root_suffix_length != 4) {
                     tree->root->suffix_length += former_root_suffix_length;
-                    tree->root->suffix = former_root_suffix + (tree->root->suffix * (int) pow(10, former_root_suffix_length));
+                    tree->root->suffix = former_root_suffix + (tree->root->suffix *
+                            (int) pow(10, former_root_suffix_length));
                 }
 
-                //printf("New suffix: %d\n", tree->root->suffix);
-                //printf("Root optimizazion finished\n\n");
                 return optimize(tree);
             }
         }
     } else {
-        //printf("I have more than one child it seems!\n");
-        //printf("Root optimizazion finished\n\n");
+        // node is already optimal, call optimize on all children
         for (int i = 0; i < 10; ++i) {
             optimize_node(node->children[i]);
         }
