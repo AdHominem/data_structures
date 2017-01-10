@@ -6,7 +6,6 @@
 #define TYPE_INT "TYPE_INT"
 #define TYPE_DOUBLE "TYPE_DOUBLE"
 
-// Data types
 typedef struct llnode LinkedListNode;
 struct llnode {
     double value;
@@ -16,7 +15,6 @@ typedef struct llist {
     LinkedListNode *head;
 } LinkedList;
 
-// Functions
 int print_array(const void *array, const size_t length, const char *type) ;
 int bucketsort_modified(double *array, const size_t length) ;
 LinkedList *create_linked_list() ;
@@ -35,7 +33,7 @@ int main() {
         array[i] = rand() / ((double) RAND_MAX + 1);
     }
 
-    printf("Generating a list of random doubles in [0, 1):\n");
+    printf("Generating a list of 100 random doubles in [0, 1):\n");
     print_array(array, size, TYPE_DOUBLE);
 
     if (bucketsort_modified(array, size)) {
@@ -43,7 +41,7 @@ int main() {
         return 1;
     }
 
-    printf("Sorted:\n");
+    printf("\nSorted:\n");
     print_array(array, size, TYPE_DOUBLE);
 
     return 0;
@@ -93,7 +91,7 @@ int bucketsort_modified(double *array, const size_t length) {
         destroy_linked_list(current_bucket);
     }
 
-    printf("Biggest bucket: %zu\n", biggest_bucket);
+    printf("\nBiggest bucket: %zu\n", biggest_bucket);
     return 0;
 }
 
