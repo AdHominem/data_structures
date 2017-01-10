@@ -25,7 +25,6 @@ int tree_search(const Tree *tree, const int value) ;
 
 Tree *tree_destroy(Tree *tree) ;
 
-
 void tree_count_nodes(const Tree *tree, size_t *count) ;
 
 void test_compression(size_t numbers) ;
