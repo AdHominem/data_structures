@@ -22,7 +22,6 @@ void swap(int *array, size_t a, size_t b) {
     array[b] = temp;
 }
 
-
 void max_heapify(int *array, size_t i, size_t heap_size) {
     size_t left = 2 * i;
     size_t right = 2 * i + 1;
