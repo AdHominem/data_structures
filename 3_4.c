@@ -33,7 +33,7 @@ int main() {
     quicksort(array, SIZE);
 
     measure_performance("Binary Search", array, to_search, binary_search_modified);
-    measure_performance("Interpolation", array, to_search, interpolation_search_modified);
+    measure_performance("Interpolation Search", array, to_search, interpolation_search_modified);
 
     // Determine 100 real random values to search for
     for (size_t k = 0; k < SIZE_TO_SEARCH; ++k) {
@@ -41,7 +41,7 @@ int main() {
     }
 
     measure_performance("Binary Search Random", array, to_search, binary_search_modified);
-    measure_performance("Interpolation Random", array, to_search, interpolation_search_modified);
+    measure_performance("Interpolation Search Random", array, to_search, interpolation_search_modified);
 
     return 0;
 }
