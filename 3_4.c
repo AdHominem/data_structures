@@ -119,7 +119,7 @@ int interpolation_search_modified(const int *array, const size_t size, const int
     return key == array[lower_bound];
 }
 
-void quicksort(int *array, size_t size) {
+void quicksort(int *array, const size_t size) {
     if (size < 2) return;
 
     // This part determines the pivot element and places all array elements to the LEFT of the pivot index
@@ -137,7 +137,7 @@ void quicksort(int *array, size_t size) {
     quicksort(array + i, size - i);
 }
 
-void swap(int *array, size_t a, size_t b) {
+void swap(int *array, const size_t a, const size_t b) {
     int temp = array[a];
     array[a] = array[b];
     array[b] = temp;
