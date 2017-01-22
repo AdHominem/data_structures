@@ -17,9 +17,9 @@ typedef struct tree {
     TreeNode *root;
 } Tree;
 
-Tree *create_tree() ;
-void add(Tree *tree, int value) ;
-void optimize(Tree *tree) ;
+Tree *tree_create() ;
+void tree_add(Tree *tree, const int value) ;
+void tree_optimize(Tree *tree) ;
 Tree *tree_destroy(Tree *tree) ;
 void tree_count_nodes(const Tree *tree, size_t *count) ;
 void test_compression(size_t numbers) ;
@@ -31,20 +31,20 @@ int main() {
     return 0;
 }
 
-void test_compression(size_t numbers) {
-    Tree *tree = create_tree();
+void test_compression(const size_t numbers) {
+    Tree *tree = tree_create();
 
     // Add random values between 0 and 9999 to the tree
     srand((unsigned) time(NULL));
     for (size_t i = 0; i < numbers; ++i) {
-        add(tree, rand() % 100000);
+        tree_add(tree, rand() % 100000);
     }
 
     size_t count = 0;
     tree_count_nodes(tree, &count);
     printf("Amount of nodes using %zu strings: %zu\n", numbers, count);
 
-    optimize(tree);
+    tree_optimize(tree);
 
     count = 0;
     tree_count_nodes(tree, &count);
@@ -66,41 +66,30 @@ void tree_count_nodes(const Tree *tree, size_t *count) {
     return tree_count_nodes_internal(tree->root, count);
 }
 
-int tree_search_internal(const TreeNode *node, const int original_value, int value) {
+int tree_search_internal(const TreeNode *node, const int original_value, const int value) {
 
-    // are we at a leaf? if yes, compare value with the leaf
-    // if not, is there a fitting child node? if yes, use it
-    // if not, exit
+    // Are we at a leaf? If yes, compare value with the leaf
+    // Else, is there a fitting child node? If yes, use it
+    // Else exit
 
     if (node->suffix_length == 5 && node->suffix == original_value) {
         return true;
     } else {
-
         int child_index = value / (int) pow(10, node->suffix_length) % 10;
-
         TreeNode *child = node->children[child_index];
-
-        if (child) {
-            return tree_search_internal(child, original_value, value / (int) pow(10, node->suffix_length));
-        } else {
-            return false;
-        }
+        return (child) ? tree_search_internal(child, original_value, value / (int) pow(10, node->suffix_length))
+                       : false;
     }
 }
 
 int tree_search(const Tree *tree, const int value) {
-    assert(value < 100000);
     return tree_search_internal(tree->root, value, value);
-
 }
 
-void optimize_node(TreeNode *node) {
-
+void tree_node_optimize(TreeNode *node) {
     if (node == NULL) {
         return;
     }
-
-    //printf("Node optimization starts\n");
 
     size_t children_count = 0;
     for (size_t i = 0; i < 10; ++i) {
@@ -108,11 +97,12 @@ void optimize_node(TreeNode *node) {
             ++children_count;
         }
     }
-    //printf("Node %d (%zu) here, it seems my number of children is %zu\n", node->suffix, node->suffix_length, children_count);
+
+    // Zero children: No need to optimize
+    // One child: Swap with child
+    // More than two: Can't optimize, just call optimize on all children
 
     if (children_count == 0) {
-        //printf("Node %d here, i have zero children, no need to optimize\n", node->suffix);
-        //printf("Node optimization finished\n\n");
         return;
     } else if (children_count == 1) {
         for (size_t i = 0; i < 10; ++i) {
@@ -137,25 +127,20 @@ void optimize_node(TreeNode *node) {
                 // free child (not its children!)
                 free(child);
 
-                //printf("New suffix %d here, len %zu\n", node->suffix, node->suffix_length);
-
                 // call optimize on myself
-                //printf("Node optimization finished\n\n");
-                optimize_node(node);
+                tree_node_optimize(node);
                 return;
             }
         }
     } else {
-        //printf("I have more than one child it seems!\n");
-        //printf("Node optimizazion finished\n\n");
         for (int i = 0; i < 10; ++i) {
-            optimize_node(node->children[i]);
+            tree_node_optimize(node->children[i]);
         }
     }
 }
 
 // Assumes that the root node has a suffix length of zero
-void optimize(Tree *tree) {
+void tree_optimize(Tree *tree) {
     TreeNode *node = tree->root;
 
     // We dont need to optimize a root if it has already a suffix length of 5
@@ -190,18 +175,18 @@ void optimize(Tree *tree) {
                             (int) pow(10, former_root_suffix_length));
                 }
 
-                return optimize(tree);
+                return tree_optimize(tree);
             }
         }
     } else {
         // node is already optimal, call optimize on all children
         for (int i = 0; i < 10; ++i) {
-            optimize_node(node->children[i]);
+            tree_node_optimize(node->children[i]);
         }
     }
 }
 
-TreeNode *create_tree_node(int suffix, size_t suffix_length) {
+TreeNode *tree_node_create(const int suffix, const size_t suffix_length) {
 
     TreeNode *result = malloc(sizeof(TreeNode));
     if (result == NULL) {
@@ -228,12 +213,12 @@ TreeNode *tree_node_destroy(TreeNode *node) {
     return NULL;
 }
 
-Tree *create_tree() {
+Tree *tree_create() {
     Tree *result = malloc(sizeof(Tree));
     if (result == NULL) {
         return NULL;
     }
-    result->root = create_tree_node(0, 0);
+    result->root = tree_node_create(0, 0);
     return result;
 }
 
@@ -245,52 +230,26 @@ Tree *tree_destroy(Tree *tree) {
     return NULL;
 }
 
-void add_internal(TreeNode *node, int value, size_t depth) {
+void tree_add_internal(TreeNode *node, const int value, const size_t depth) {
 
     // Get the last digit of the value, according to its depth
     int last_digit = value / (int) pow(10, depth) % 10;
 
     if (node->children[last_digit] == NULL) {
         if (depth < STRING_SIZE - 1) {
-            node->children[last_digit] = create_tree_node(last_digit, 1);
-            add_internal(node->children[last_digit], value, depth + 1);
+            node->children[last_digit] = tree_node_create(last_digit, 1);
+            tree_add_internal(node->children[last_digit], value, depth + 1);
         } else {
-            node->children[last_digit] = create_tree_node(value, STRING_SIZE);
+            node->children[last_digit] = tree_node_create(value, STRING_SIZE);
         }
     } else {
-        add_internal(node->children[last_digit], value, depth + 1);
+        tree_add_internal(node->children[last_digit], value, depth + 1);
     }
 }
 
 // will add to the tree only if the value is not already in the tree
-void add(Tree *tree, int value) {
+void tree_add(Tree *tree, const int value) {
     if (tree_search(tree, value) == 0) {
-        add_internal(tree->root, value, 0);
+        tree_add_internal(tree->root, value, 0);
     }
 }
-
-void print_tree_node_keys(TreeNode *node) {
-    printf("Suffix: %05d length:%zu\n", node->suffix, node->suffix_length);
-}
-
-void print_tree_nodes(TreeNode *node, size_t depth){
-    if (node) {
-
-        for (size_t indentations = 1; indentations < depth; indentations++) {
-            printf("\t");
-        }
-
-        // print own
-        print_tree_node_keys(node);
-
-        // call this on all children
-        for (size_t i = 0; i < 10; i++) {
-            print_tree_nodes(node->children[i], depth + 1);
-        }
-    }
-}
-
-void print_tree(Tree *tree) {
-    print_tree_nodes(tree->root, 1);
-}
-
