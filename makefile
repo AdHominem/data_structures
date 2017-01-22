@@ -16,4 +16,4 @@ all: 3_3 3_4 3_5 3_6 3_7
 	gcc -std=c99 3_7.c -o 3_7
 
 clean:
-	del 3_3 3_4 3_5 3_6 3_7
+	del 3_3.exe 3_4.exe 3_5.exe 3_6.exe 3_7.exe
