@@ -4,12 +4,12 @@
 
 #define TABLE_SIZE 128
 
-typedef struct llnode LinkedListNode;
-struct llnode {
+typedef struct linked_list_node LinkedListNode;
+struct linked_list_node {
     int value;
     LinkedListNode *next;
 };
-typedef struct llist {
+typedef struct linked_list {
     LinkedListNode *head;
 } LinkedList;
 typedef size_t (*hash_function)(const int *);
@@ -19,12 +19,55 @@ typedef struct hash_table {
     size_t argument_count;
 } HashTable;
 
-size_t get_max_chain_length(int input[TABLE_SIZE], size_t (*hash_function)(const int *), int *hash_parameters) ;
 size_t hash_modulo(const int *parameters) ;
 size_t hash_universal(const int *parameters) ;
 HashTable *hash_table_destroy(HashTable *hash_table) ;
 void hash_table_add(HashTable *hash_table, const int *parameters) ;
-HashTable *hash_table_create(hash_function hash_function, size_t argument_count) ;
+LinkedList *create_linked_list() ;
+size_t length_of_(LinkedList *list) ;
+
+HashTable *hash_table_create(const hash_function hash_function, const size_t argument_count) {
+    HashTable *result = malloc(sizeof(HashTable));
+
+    for (size_t i = 0; i < TABLE_SIZE; ++i) {
+        result->rows[i] = create_linked_list();
+        if (!result->rows[i]) {
+            return hash_table_destroy(result);
+        }
+    }
+
+    result->hash_function = hash_function;
+    result->argument_count = argument_count;
+
+    return result;
+}
+
+size_t get_max_chain_length(int input[TABLE_SIZE], hash_function hash_function, int *hash_parameters) {
+    HashTable *hash_table = (hash_function == hash_modulo)
+                            ? hash_table_create(hash_modulo, 0) : hash_table_create(hash_universal, 2);
+    if (!hash_table) {
+        return 0;
+    }
+
+    for (size_t i = 0; i < TABLE_SIZE; ++i) {
+        int parameters[1 + hash_table->argument_count];
+        parameters[0] = input[i];
+        for (size_t j = 1; j < hash_table->argument_count; ++j) {
+            parameters[j] = hash_parameters[j - 1];
+        }
+        hash_table_add(hash_table, parameters);
+    }
+
+    size_t maximum_chain_length = 0;
+    for (int j = 0; j < TABLE_SIZE; ++j) {
+        const size_t length = length_of_(hash_table->rows[j]);
+        maximum_chain_length = (length > maximum_chain_length) ? length : maximum_chain_length;
+    }
+
+    hash_table_destroy(hash_table);
+
+    return maximum_chain_length;
+}
 
 int main() {
     srand((unsigned) time(NULL));
@@ -83,6 +126,14 @@ int main() {
     printf("Longest chain was: %zu\n", maximum_chain_length);
 
     return 0;
+}
+
+size_t hash_modulo(const int *parameters) {
+    return (size_t) (parameters[0] % TABLE_SIZE);
+}
+
+size_t hash_universal(const int *parameters) {
+    return ((parameters[1] * (size_t) parameters[0] + parameters[2]) % 491) % TABLE_SIZE;
 }
 
 LinkedListNode *create_linked_list_node(int value) {
@@ -163,109 +214,8 @@ int insert_at_linked_list(LinkedList *list, int value, size_t index) {
     return 0;
 }
 
-int linked_list_add_sorted(LinkedList *list, int value) {
-
-    LinkedListNode *to_insert = create_linked_list_node(value);
-    if (to_insert == NULL) {
-        return 1;
-    }
-
-    LinkedListNode *current_node = list->head;
-
-    // Catch empty list and append to front case
-    if (current_node == NULL || current_node->value > value) {
-        to_insert->next = current_node;
-        list->head = to_insert;
-    } else {
-        LinkedListNode *precursor = NULL;
-
-        for (size_t i = 0; i < length_of_(list); ++i) {
-
-            precursor = current_node;
-            current_node = current_node->next;
-
-            // current node is NULL? Then we are at the end and the value to insert is the largest in the list
-            // or is the current value larger than our value? then we can insert too
-            if (current_node == NULL || current_node->value > value) {
-                to_insert->next = current_node;
-                precursor->next = to_insert;
-                break;
-            }
-            // if not, move further in the list
-        }
-    }
-    return 0;
-}
-
-void linked_list_as_array(LinkedList *list, int *array) {
-
-    LinkedListNode *node = list->head;
-
-    for (size_t i = 0; i < length_of_(list); ++i) {
-        array[i] = node->value;
-        node = node->next;
-    }
-}
-
 void add_to_linked_list(LinkedList *list, int value) {
     insert_at_linked_list(list, value, length_of_(list));
-}
-
-void print_linked_list(LinkedList *list) {
-    LinkedListNode *head = list->head;
-
-    while (head != NULL) {
-        printf("%d ", head->value);
-        head = head->next;
-    }
-
-    printf("\n");
-}
-
-int linked_list_contains(LinkedList *list, int value) {
-    LinkedListNode *current = list->head;
-    while (current) {
-        if (current->value == value) {
-            return 1;
-        }
-        current = current->next;
-    }
-    return 0;
-}
-
-size_t hash_modulo(const int *parameters) {
-    return (size_t) (parameters[0] % TABLE_SIZE);
-}
-
-size_t hash_universal(const int *parameters) {
-    return ((parameters[1] * (size_t) parameters[0] + parameters[2]) % 491) % TABLE_SIZE;
-}
-
-size_t get_max_chain_length(int input[TABLE_SIZE], size_t (*hash_function)(const int *), int *hash_parameters) {
-    HashTable *hash_table = (hash_function == hash_modulo)
-                            ? hash_table_create(hash_modulo, 0) : hash_table_create(hash_universal, 2);
-    if (!hash_table) {
-        return 0;
-    }
-
-    for (size_t i = 0; i < TABLE_SIZE; ++i) {
-        int parameters[1 + hash_table->argument_count];
-        parameters[0] = input[i];
-        for (size_t j = 1; j < hash_table->argument_count; ++j) {
-            parameters[j] = hash_parameters[j - 1];
-        }
-        hash_table_add(hash_table, parameters);
-    }
-
-    size_t maximum_chain_length = 0;
-    for (int j = 0; j < TABLE_SIZE; ++j) {
-        const size_t length = length_of_(hash_table->rows[j]);
-        maximum_chain_length = (length > maximum_chain_length) ? length : maximum_chain_length;
-    }
-
-    hash_table_destroy(hash_table);
-
-    return maximum_chain_length;
 }
 
 HashTable *hash_table_destroy(HashTable *hash_table) {
@@ -276,29 +226,6 @@ HashTable *hash_table_destroy(HashTable *hash_table) {
     }
     free(hash_table);
     return NULL;
-}
-
-HashTable *hash_table_create(const hash_function hash_function, size_t argument_count) {
-    HashTable *result = malloc(sizeof(HashTable));
-
-    for (size_t i = 0; i < TABLE_SIZE; ++i) {
-        result->rows[i] = create_linked_list();
-        if (!result->rows[i]) {
-            return hash_table_destroy(result);
-        }
-    }
-
-    result->hash_function = hash_function;
-    result->argument_count = argument_count;
-
-    return result;
-}
-
-void hash_table_print(HashTable *hash_table) {
-    for (size_t i = 0; i < TABLE_SIZE; ++i) {
-        printf("%zu: ", i);
-        print_linked_list(hash_table->rows[i]);
-    }
 }
 
 void hash_table_add(HashTable *hash_table, const int *parameters) {
