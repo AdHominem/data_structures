@@ -22,15 +22,15 @@
 
 // DATA STRUCTURES
 
-typedef struct llnode LinkedListNode;
+typedef struct linked_list_node LinkedListNode;
 
-struct llnode {
+struct linked_list_node {
     int value;
     LinkedListNode *next;
 };
 
 /// Linked list is just a wrapper for the nodes
-typedef struct llist {
+typedef struct linked_list {
     LinkedListNode *head;
 } LinkedList;
 
@@ -39,7 +39,7 @@ typedef struct llist {
 /// Creates a new linked list node
 /// \param value The node's value
 /// \return A pointer to the new node or NULL if memory allocation failed
-LinkedListNode *create_linked_list_node(int value) {
+LinkedListNode *linked_list_node_create(int value) {
     LinkedListNode *result = malloc(sizeof(LinkedListNode));
     if (result == NULL) {
         perror("Could not allocate memory!");
@@ -55,9 +55,9 @@ LinkedListNode *create_linked_list_node(int value) {
 /// Destroys all linked nodes starting at node. This is usually the root of a linked list
 /// \param linkedlistnode The node to destroy
 /// \return A NULL pointer to be used for overwriting the object pointer
-LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
+LinkedListNode *linked_list_node_destroy_recursively(LinkedListNode *node) {
     if (node) {
-        node->next = destroy_nodes_recursively(node->next);
+        node->next = linked_list_node_destroy_recursively(node->next);
     }
     free(node);
     return NULL;
@@ -65,16 +65,16 @@ LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
 
 /// Creates a linked list
 /// \return A pointer to the list or NULL if memory allocation failed
-LinkedList *create_linked_list() {
+LinkedList *linked_list_create() {
     return calloc(1, sizeof(LinkedList));
 }
 
 /// Destroys the given list, freeing its memory
 /// \param list The list to destroy
 /// \return A NULL pointer to be used for overwriting the object pointer
-LinkedList *destroy_linked_list(LinkedList *list) {
+LinkedList *linked_list_destroy(LinkedList *list) {
     if (list) {
-        list->head = destroy_nodes_recursively(list->head);
+        list->head = linked_list_node_destroy_recursively(list->head);
     }
     free(list);
     return NULL;
@@ -85,7 +85,7 @@ LinkedList *destroy_linked_list(LinkedList *list) {
 /// Calculates the length of the linked list dynamically
 /// \param list The target list
 /// \return The length
-size_t length_of_(LinkedList *list) {
+size_t linked_list_get_length(LinkedList *list) {
     LinkedListNode *head = list->head;
     size_t result = 0;
 
@@ -105,13 +105,13 @@ size_t length_of_(LinkedList *list) {
 int insert_at_linked_list(LinkedList *list, int value, size_t index) {
 
     // Catch index out of range
-    if (index > length_of_(list)) {
+    if (index > linked_list_get_length(list)) {
         perror("List index out of range!");
         return 2;
     }
 
     LinkedListNode *head = list->head;
-    LinkedListNode *to_insert = create_linked_list_node(value);
+    LinkedListNode *to_insert = linked_list_node_create(value);
     if (to_insert == NULL) {
         return 1;
     }
@@ -141,7 +141,7 @@ int insert_at_linked_list(LinkedList *list, int value, size_t index) {
 /// \return 0 if insertion was successful and 1 if memory allocation failed
 int linked_list_add_sorted(LinkedList *list, int value) {
 
-    LinkedListNode *to_insert = create_linked_list_node(value);
+    LinkedListNode *to_insert = linked_list_node_create(value);
     if (to_insert == NULL) {
         return 1;
     }
@@ -155,7 +155,7 @@ int linked_list_add_sorted(LinkedList *list, int value) {
     } else {
         LinkedListNode *precursor = NULL;
 
-        for (size_t i = 0; i < length_of_(list); ++i) {
+        for (size_t i = 0; i < linked_list_get_length(list); ++i) {
 
             precursor = current_node;
             current_node = current_node->next;
@@ -180,7 +180,7 @@ void linked_list_as_array(LinkedList *list, int *array) {
 
     LinkedListNode *node = list->head;
 
-    for (size_t i = 0; i < length_of_(list); ++i) {
+    for (size_t i = 0; i < linked_list_get_length(list); ++i) {
         array[i] = node->value;
         node = node->next;
     }
@@ -190,12 +190,12 @@ void linked_list_as_array(LinkedList *list, int *array) {
 /// \param list The target list
 /// \param value The value to append
 void add_to_linked_list(LinkedList *list, int value) {
-    insert_at_linked_list(list, value, length_of_(list));
+    insert_at_linked_list(list, value, linked_list_get_length(list));
 }
 
 /// Prints the linked list as a one line blank delimited string
 /// \param list The list to print
-void print_linked_list(LinkedList *list) {
+void linked_list_print(LinkedList *list) {
     LinkedListNode *head = list->head;
 
     while (head != NULL) {
@@ -827,7 +827,7 @@ typedef struct alist {
 /// \return NULL
 AdjacencyListNode *destroy_alnode(AdjacencyListNode *node) {
     if (node) {
-        node->successors = destroy_linked_list(node->successors);
+        node->successors = linked_list_destroy(node->successors);
     }
     free(node);
     return NULL;
@@ -845,7 +845,7 @@ AdjacencyListNode *create_alnode(int value) {
 
     result->value = value;
 
-    result->successors = create_linked_list();
+    result->successors = linked_list_create();
     if (result->successors == NULL) {
         return destroy_alnode(result);
     }
@@ -899,7 +899,7 @@ void print_alist(AdjacencyList *list) {
 
     for (int i = 0; i < NODES_COUNT; ++i) {
         printf("%d: ", i);
-        print_linked_list(list->nodes[i]->successors);
+        linked_list_print(list->nodes[i]->successors);
     }
     printf("\n");
 }
@@ -1156,7 +1156,7 @@ typedef struct hash_table {
 HashTable *hash_table_destroy(HashTable *hash_table) {
     if (hash_table) {
         for (size_t i = 0; i < TABLE_SIZE; ++i) {
-            hash_table->rows[i] = destroy_linked_list(hash_table->rows[i]);
+            hash_table->rows[i] = linked_list_destroy(hash_table->rows[i]);
         }
     }
     free(hash_table);
@@ -1167,11 +1167,11 @@ HashTable *hash_table_destroy(HashTable *hash_table) {
 /// \param hash_function Hash function which maps an int array of params to a size_t. The first element is expected
 /// to be the value to hash, the others are further arguments if needed
 /// \return A pointer to the newly created HashTable or NULL in case of a memory error
-HashTable *hash_table_create(hash_function hash_function, size_t argument_count) {
+HashTable * hash_table_create(const hash_function hash_function, const size_t argument_count) {
     HashTable *result = malloc(sizeof(HashTable));
 
     for (size_t i = 0; i < TABLE_SIZE; ++i) {
-        result->rows[i] = create_linked_list();
+        result->rows[i] = linked_list_create();
         if (!result->rows[i]) {
             return hash_table_destroy(result);
         }
@@ -1188,7 +1188,7 @@ HashTable *hash_table_create(hash_function hash_function, size_t argument_count)
 void hash_table_print(HashTable *hash_table) {
     for (size_t i = 0; i < TABLE_SIZE; ++i) {
         printf("%zu: ", i);
-        print_linked_list(hash_table->rows[i]);
+        linked_list_print(hash_table->rows[i]);
     }
 }
 

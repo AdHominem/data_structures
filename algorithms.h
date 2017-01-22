@@ -26,7 +26,7 @@ void print_double(const void *number) {
 /// \param length The length of the array
 /// \param type The data type xxx of the array elements in the form of "TYPE_XXX"
 /// \return 1 in case of an invalid data type
-int print_array(const void *array, const size_t length, const char *type) {
+int array_print(const void *array, const size_t length, const char *type) {
 
     void (*function)(const void *);
     void *cast_array;
@@ -85,7 +85,7 @@ void swap_d(double *array, size_t a, size_t b) {
 /// \param array The heap to check as an array
 /// \param index The index to start checking at
 /// \param heap_size The size of the heap
-void max_heapify(int *array, size_t index, size_t heap_size) {
+void heap_max_heapify(int *array, const size_t index, const size_t heap_size) {
     size_t left_child_index = 2 * index + 1;
     size_t right_child_index = 2 * index + 2;
 //    printf("\tIncoming: \n\t");
@@ -104,7 +104,7 @@ void max_heapify(int *array, size_t index, size_t heap_size) {
         swap(array, index, maximum);
 //        printf("\tAfter swapping: \n\t");
 //        print_array(array, heap_size, TYPE_INT);
-        max_heapify(array, maximum, heap_size);
+        heap_max_heapify(array, maximum, heap_size);
     }
 
 }
@@ -112,32 +112,32 @@ void max_heapify(int *array, size_t index, size_t heap_size) {
 /// Constructs a binary heap out of an arbitrary array.
 /// \param array The array to build the heap of
 /// \param size The size of the array
-void build_max_heap(int *array, size_t size) {
+void heap_build_max(int *array, const size_t size) {
     if (size < 2) return;
 
     // Note that it is only necessary to heapify the top (size / 2 - 1) elements,
     // since the lower half will only contain leafs
     for (size_t i = size / 2; i-- != 0;) {
         //printf("Size in build_max_heap is %zu\n", i);
-        max_heapify(array, i, size);
+        heap_max_heapify(array, i, size);
     }
 }
 
 void heapsort(int *array, size_t size) {
     if (size < 2) return;
 
-    build_max_heap(array, size);
+    heap_build_max(array, size);
     //print_array(array, size, TYPE_INT);
     while (--size) {
         //printf("Size is now %zu, swapping %d and %d\n", size, array[0], array[size]);
         swap(array, 0, size);
-        max_heapify(array, 0, size);
+        heap_max_heapify(array, 0, size);
     }
 }
 
 void merge(int *array, size_t size, size_t middle) {
     int *temp = malloc(size * sizeof (int));
-    print_array(array, size, TYPE_INT);
+    array_print(array, size, TYPE_INT);
 
     for (size_t lpos = 0, rpos = middle, i = 0; i < size; i++) {
         int value;
@@ -215,10 +215,10 @@ int bucketsort(int *array, const size_t length) {
     // Initialize buckets
     LinkedList *buckets[length];
     for (size_t i = 0; i < length; i++) {
-        buckets[i] = create_linked_list();
+        buckets[i] = linked_list_create();
         if (buckets[i] == NULL) {
             for (size_t j = 0; j < i; ++j) {
-                destroy_linked_list(buckets[j]);
+                linked_list_destroy(buckets[j]);
             }
             return 1;
         }
@@ -237,7 +237,7 @@ int bucketsort(int *array, const size_t length) {
 
         // Get bucket as array and sort it
         LinkedList *current_bucket = buckets[bucket_index];
-        size_t bucket_size = length_of_(current_bucket);
+        size_t bucket_size = linked_list_get_length(current_bucket);
         int bucket_as_array[bucket_size];
         linked_list_as_array(current_bucket, bucket_as_array);
         bubblesort(bucket_as_array, bucket_size);
@@ -248,7 +248,7 @@ int bucketsort(int *array, const size_t length) {
         }
 
         array_index += bucket_size;
-        destroy_linked_list(current_bucket);
+        linked_list_destroy(current_bucket);
     }
     return 0;
 }
@@ -356,7 +356,7 @@ int test_sorting_algorithm(void (*sort)(int *, size_t)) {
     for (size_t i = 0; i < size; ++i) {
         if (ints[i] != ints_sorted[i]) {
             printf("Test failed!\n");
-            print_array(ints, size, TYPE_INT);
+            array_print(ints, size, TYPE_INT);
             return 1;
         }
     }
@@ -378,7 +378,7 @@ int test_sorting_algorithm(void (*sort)(int *, size_t)) {
     for (size_t i = 0; i < size; ++i) {
         if (ints_sorted_again[i] != ints_sorted_too[i]) {
             printf("Test already sorted failed!\n");
-            print_array(ints_sorted_again, size, TYPE_INT);
+            array_print(ints_sorted_again, size, TYPE_INT);
             return 1;
         }
     }
