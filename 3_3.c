@@ -6,23 +6,23 @@
 #define TYPE_INT "TYPE_INT"
 #define TYPE_DOUBLE "TYPE_DOUBLE"
 
-typedef struct llnode LinkedListNode;
-struct llnode {
+typedef struct linked_list_node LinkedListNode;
+struct linked_list_node {
     double value;
     LinkedListNode *next;
 };
-typedef struct llist {
+typedef struct linked_list {
     LinkedListNode *head;
 } LinkedList;
 
-int print_array(const void *array, const size_t length, const char *type) ;
+int array_print(const void *array, const size_t length, const char *type) ;
 int bucketsort_modified(double *array, const size_t length) ;
-LinkedList *create_linked_list() ;
-LinkedList *destroy_linked_list(LinkedList *list) ;
-void add_to_linked_list(LinkedList *list, double value) ;
-size_t length_of_(LinkedList *list) ;
-void linked_list_as_array(LinkedList *list, double *array) ;
+LinkedList *linked_list_create() ;
+LinkedList *linked_list_destroy(LinkedList *list) ;
+void linked_list_add(LinkedList *list, double value) ;
 void bubblesort(double *array, size_t length) ;
+size_t linked_list_get_length(const LinkedList *list) ;
+void linked_list_as_array(const LinkedList *list, double *array) ;
 
 int main() {
     srand((unsigned) time(NULL));
@@ -34,7 +34,7 @@ int main() {
     }
 
     printf("Generating a list of 100 random doubles in [0, 1):\n");
-    print_array(array, size, TYPE_DOUBLE);
+    array_print(array, size, TYPE_DOUBLE);
 
     if (bucketsort_modified(array, size)) {
         perror("An error occurred during memory allocation!");
@@ -42,20 +42,20 @@ int main() {
     }
 
     printf("\nSorted:\n");
-    print_array(array, size, TYPE_DOUBLE);
+    array_print(array, size, TYPE_DOUBLE);
 
     return 0;
 }
 
 int bucketsort_modified(double *array, const size_t length) {
 
-    // Initialize buckets
+    // Initialize buckets and handle memory errors
     LinkedList *buckets[length];
     for (size_t i = 0; i < length; i++) {
-        buckets[i] = create_linked_list();
+        buckets[i] = linked_list_create();
         if (buckets[i] == NULL) {
             for (size_t j = 0; j < i; ++j) {
-                destroy_linked_list(buckets[j]);
+                linked_list_destroy(buckets[j]);
             }
             return 1;
         }
@@ -64,7 +64,7 @@ int bucketsort_modified(double *array, const size_t length) {
     // Put elements in buckets
     for (size_t i = 0; i < length; i++) {
         LinkedList *relevant_bucket = buckets[(size_t) (length * array[i])];
-        add_to_linked_list(relevant_bucket, array[i]);
+        linked_list_add(relevant_bucket, array[i]);
     }
 
     // Sort all buckets and insert them into the array
@@ -74,7 +74,7 @@ int bucketsort_modified(double *array, const size_t length) {
 
         // Get bucket as array and sort it
         LinkedList *current_bucket = buckets[bucket_index];
-        size_t bucket_size = length_of_(current_bucket);
+        size_t bucket_size = linked_list_get_length(current_bucket);
         double bucket_as_array[bucket_size];
         linked_list_as_array(current_bucket, bucket_as_array);
         bubblesort(bucket_as_array, bucket_size);
@@ -88,7 +88,7 @@ int bucketsort_modified(double *array, const size_t length) {
         }
 
         array_index += bucket_size;
-        destroy_linked_list(current_bucket);
+        linked_list_destroy(current_bucket);
     }
 
     printf("\nBiggest bucket: %zu\n", biggest_bucket);
@@ -97,7 +97,7 @@ int bucketsort_modified(double *array, const size_t length) {
 
 // UTILITY
 
-LinkedListNode *create_linked_list_node(double value) {
+LinkedListNode *linked_list_node_create(const double value) {
     LinkedListNode *result = malloc(sizeof(LinkedListNode));
     if (result == NULL) {
         perror("Could not allocate memory!");
@@ -110,27 +110,27 @@ LinkedListNode *create_linked_list_node(double value) {
     return result;
 }
 
-LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
+LinkedListNode *linked_list_node_destroy_recursively(LinkedListNode *node) {
     if (node) {
-        node->next = destroy_nodes_recursively(node->next);
+        node->next = linked_list_node_destroy_recursively(node->next);
     }
     free(node);
     return NULL;
 }
 
-LinkedList *create_linked_list() {
+LinkedList *linked_list_create() {
     return calloc(1, sizeof(LinkedList));
 }
 
-LinkedList *destroy_linked_list(LinkedList *list) {
+LinkedList *linked_list_destroy(LinkedList *list) {
     if (list) {
-        list->head = destroy_nodes_recursively(list->head);
+        list->head = linked_list_node_destroy_recursively(list->head);
     }
     free(list);
     return NULL;
 }
 
-size_t length_of_(LinkedList *list) {
+size_t linked_list_get_length(const LinkedList *list) {
     size_t result = 0;
 
     if (list) {
@@ -145,16 +145,16 @@ size_t length_of_(LinkedList *list) {
     return result;
 }
 
-int insert_at_linked_list(LinkedList *list, double value, size_t index) {
+int linked_list_insert(LinkedList *list, const double value, const size_t index) {
 
     // Catch index out of range
-    if (index > length_of_(list)) {
+    if (index > linked_list_get_length(list)) {
         perror("List index out of range!");
         return 2;
     }
 
     LinkedListNode *head = list->head;
-    LinkedListNode *to_insert = create_linked_list_node(value);
+    LinkedListNode *to_insert = linked_list_node_create(value);
     if (to_insert == NULL) {
         return 1;
     }
@@ -178,38 +178,27 @@ int insert_at_linked_list(LinkedList *list, double value, size_t index) {
     return 0;
 }
 
-void linked_list_as_array(LinkedList *list, double *array) {
+void linked_list_as_array(const LinkedList *list, double *array) {
 
     LinkedListNode *node = list->head;
 
-    for (size_t i = 0; i < length_of_(list); ++i) {
+    for (size_t i = 0; i < linked_list_get_length(list); ++i) {
         array[i] = node->value;
         node = node->next;
     }
 }
 
-void add_to_linked_list(LinkedList *list, double value) {
-    insert_at_linked_list(list, value, length_of_(list));
+void linked_list_add(LinkedList *list, const double value) {
+    linked_list_insert(list, value, linked_list_get_length(list));
 }
 
-void print_linked_list(LinkedList *list) {
-    LinkedListNode *head = list->head;
-
-    while (head != NULL) {
-        printf("%lf ", head->value);
-        head = head->next;
-    }
-
-    printf("\n");
-}
-
-void swap(double *array, size_t a, size_t b) {
+void swap(double *array, const size_t a, const size_t b) {
     double temp = array[a];
     array[a] = array[b];
     array[b] = temp;
 }
 
-void bubblesort(double *array, size_t length) {
+void bubblesort(double *array, const size_t length) {
     if (!length) return;
 
     for (size_t end_index = length - 1; end_index > 0; --end_index) {
@@ -231,7 +220,7 @@ void print_int(const void *number) {
     printf("%d ", result);
 }
 
-int print_array(const void *array, const size_t length, const char *type) {
+int array_print(const void *array, const size_t length, const char *type) {
 
     void (*function)(const void *);
     void *cast_array;
