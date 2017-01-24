@@ -138,7 +138,7 @@ HashTable *hash_table_create(const hash_function hash_function, const size_t arg
     return result;
 }
 
-LinkedListNode *create_linked_list_node(int value) {
+LinkedListNode *linked_list_node_create(int value) {
     LinkedListNode *result = malloc(sizeof(LinkedListNode));
     if (result == NULL) {
         perror("Could not allocate memory!");
@@ -151,7 +151,7 @@ LinkedListNode *create_linked_list_node(int value) {
     return result;
 }
 
-LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
+LinkedListNode *linked_list_node_destroy_recursively(LinkedListNode *node) {
     if (node) {
         node->next = destroy_nodes_recursively(node->next);
     }
@@ -159,11 +159,11 @@ LinkedListNode *destroy_nodes_recursively(LinkedListNode *node) {
     return NULL;
 }
 
-LinkedList *create_linked_list() {
+LinkedList *linked_list_create() {
     return calloc(1, sizeof(LinkedList));
 }
 
-LinkedList *destroy_linked_list(LinkedList *list) {
+LinkedList *linked_list_destroy(LinkedList *list) {
     if (list) {
         list->head = destroy_nodes_recursively(list->head);
     }
@@ -171,7 +171,7 @@ LinkedList *destroy_linked_list(LinkedList *list) {
     return NULL;
 }
 
-size_t length_of_(LinkedList *list) {
+size_t linked_list_get_length(LinkedList *list) {
     LinkedListNode *head = list->head;
     size_t result = 0;
 
@@ -183,7 +183,7 @@ size_t length_of_(LinkedList *list) {
     return result;
 }
 
-int insert_at_linked_list(LinkedList *list, int value, size_t index) {
+int linked_list_insert(LinkedList *list, int value, size_t index) {
 
     // Catch index out of range
     if (index > length_of_(list)) {
@@ -216,7 +216,7 @@ int insert_at_linked_list(LinkedList *list, int value, size_t index) {
     return 0;
 }
 
-void add_to_linked_list(LinkedList *list, int value) {
+void linked_list_add(LinkedList *list, int value) {
     insert_at_linked_list(list, value, length_of_(list));
 }
 
