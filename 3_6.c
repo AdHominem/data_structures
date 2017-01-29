@@ -23,10 +23,9 @@ size_t hash_modulo(const int *parameters) ;
 size_t hash_universal(const int *parameters) ;
 HashTable *hash_table_destroy(HashTable *hash_table) ;
 void hash_table_add(HashTable *hash_table, const int *parameters) ;
-LinkedList *create_linked_list() ;
-size_t length_of_(LinkedList *list) ;
-size_t get_max_chain_length(int input[TABLE_SIZE], hash_function hash_function, int *hash_parameters) ;
+size_t linked_list_get_length(LinkedList *list) ;
 HashTable *hash_table_create(const hash_function hash_function, const size_t argument_count) ;
+size_t get_max_chain_length(int input[TABLE_SIZE], const hash_function hash_function, int *hash_parameters) ;
 
 int main() {
     srand((unsigned) time(NULL));
@@ -87,7 +86,7 @@ int main() {
     return 0;
 }
 
-size_t get_max_chain_length(int input[TABLE_SIZE], hash_function hash_function, int *hash_parameters) {
+size_t get_max_chain_length(int input[TABLE_SIZE], const hash_function hash_function, int *hash_parameters) {
     HashTable *hash_table = (hash_function == hash_modulo)
                             ? hash_table_create(hash_modulo, 0) : hash_table_create(hash_universal, 2);
     if (!hash_table) {
@@ -105,7 +104,7 @@ size_t get_max_chain_length(int input[TABLE_SIZE], hash_function hash_function, 
 
     size_t maximum_chain_length = 0;
     for (int j = 0; j < TABLE_SIZE; ++j) {
-        const size_t length = length_of_(hash_table->rows[j]);
+        const size_t length = linked_list_get_length(hash_table->rows[j]);
         maximum_chain_length = (length > maximum_chain_length) ? length : maximum_chain_length;
     }
 
@@ -122,11 +121,15 @@ size_t hash_universal(const int *parameters) {
     return ((parameters[1] * (size_t) parameters[0] + parameters[2]) % 491) % TABLE_SIZE;
 }
 
+LinkedList *linked_list_create() {
+    return calloc(1, sizeof(LinkedList));
+}
+
 HashTable *hash_table_create(const hash_function hash_function, const size_t argument_count) {
     HashTable *result = malloc(sizeof(HashTable));
 
     for (size_t i = 0; i < TABLE_SIZE; ++i) {
-        result->rows[i] = create_linked_list();
+        result->rows[i] = linked_list_create();
         if (!result->rows[i]) {
             return hash_table_destroy(result);
         }
@@ -153,19 +156,15 @@ LinkedListNode *linked_list_node_create(int value) {
 
 LinkedListNode *linked_list_node_destroy_recursively(LinkedListNode *node) {
     if (node) {
-        node->next = destroy_nodes_recursively(node->next);
+        node->next = linked_list_node_destroy_recursively(node->next);
     }
     free(node);
     return NULL;
 }
 
-LinkedList *linked_list_create() {
-    return calloc(1, sizeof(LinkedList));
-}
-
 LinkedList *linked_list_destroy(LinkedList *list) {
     if (list) {
-        list->head = destroy_nodes_recursively(list->head);
+        list->head = linked_list_node_destroy_recursively(list->head);
     }
     free(list);
     return NULL;
@@ -186,13 +185,13 @@ size_t linked_list_get_length(LinkedList *list) {
 int linked_list_insert(LinkedList *list, int value, size_t index) {
 
     // Catch index out of range
-    if (index > length_of_(list)) {
+    if (index > linked_list_get_length(list)) {
         perror("List index out of range!");
         return 2;
     }
 
     LinkedListNode *head = list->head;
-    LinkedListNode *to_insert = create_linked_list_node(value);
+    LinkedListNode *to_insert = linked_list_node_create(value);
     if (to_insert == NULL) {
         return 1;
     }
@@ -217,13 +216,13 @@ int linked_list_insert(LinkedList *list, int value, size_t index) {
 }
 
 void linked_list_add(LinkedList *list, int value) {
-    insert_at_linked_list(list, value, length_of_(list));
+    linked_list_insert(list, value, linked_list_get_length(list));
 }
 
 HashTable *hash_table_destroy(HashTable *hash_table) {
     if (hash_table) {
         for (size_t i = 0; i < TABLE_SIZE; ++i) {
-            hash_table->rows[i] = destroy_linked_list(hash_table->rows[i]);
+            hash_table->rows[i] = linked_list_destroy(hash_table->rows[i]);
         }
     }
     free(hash_table);
@@ -232,5 +231,5 @@ HashTable *hash_table_destroy(HashTable *hash_table) {
 
 void hash_table_add(HashTable *hash_table, const int *parameters) {
     size_t row_index = hash_table->hash_function(parameters);
-    add_to_linked_list(hash_table->rows[row_index], parameters[0]);
+    linked_list_add(hash_table->rows[row_index], parameters[0]);
 }
