@@ -10,8 +10,9 @@
 
 typedef struct b_tree_node BTreeNode;
 typedef enum {NODE, LEAF} node_type;
+typedef enum {int_type, float_type, string_type, invalid} data_type;
 struct b_tree_node {
-    node_type type;
+    node_type type_of_node;
     size_t children_count;
     size_t keys_count;
     size_t keys[DEGREE - 1];
@@ -44,13 +45,14 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, size_t value) {
     } else if (value_in_array(node->keys, node->keys_count, value)) {
         return node;
     } else {
-        //search in subtree
+        //search in left subtrees
         for (size_t i = 0; i < node->keys_count; ++i) {
             if (node->keys[i] > value) {
                 return b_tree_search_internal(node->children[i], value);
             }
         }
-        return b_tree_search_internal(node->children[node->children_count - 1], value);
+        // if the value is too big, try fitting it in the right child node
+        return b_tree_search_internal(node->children[node->keys_count], value);
     }
 }
 
@@ -58,9 +60,6 @@ BTreeNode *b_tree_search(BTree *tree, size_t value) {
     return b_tree_search_internal(tree->root, value);
 }
 
-/// Creates a new node of given degree
-/// \param degree The degree of the node
-/// \return A pointer to the new node or NULL in case of memory allocation failure
 BTreeNode *b_tree_node_create() {
 
     BTreeNode *result = malloc(sizeof(BTreeNode));
@@ -68,11 +67,60 @@ BTreeNode *b_tree_node_create() {
         return NULL;
     }
 
-    result->type = LEAF;
+    result->type_of_node = LEAF;
     result->children_count = 0;
     result->keys_count = 0;
     result->parent = NULL;
     return result;
+}
+
+void b_tree_insert(BTreeNode *node, size_t value) {
+    size_t keys_count = node->keys_count;
+    size_t *keys = node->keys;
+
+    // try to insert in root
+    if (keys_count < DEGREE - 1) {
+        keys[keys_count] = value;
+        qsort(keys, keys_count + 1, sizeof(size_t), compare_size_t);
+        node->keys_count++;
+    } else {
+        // insert virtually
+        size_t temp[DEGREE];
+        memcpy(temp, keys, keys_count * sizeof(size_t));
+        temp[keys_count] = value;
+        qsort(temp, DEGREE, sizeof(size_t), compare_size_t);
+        // determine middle
+        size_t middle = temp[DEGREE / 2];
+
+        // extract middle, create new root and split old one
+        BTreeNode *first_child = b_tree_node_create();
+        for (size_t i = 0; i < DEGREE / 2; ++i) {
+            first_child->keys[i] = temp[i];
+            first_child->keys_count++;
+        }
+
+        BTreeNode *second_child = b_tree_node_create();
+        for (size_t i = DEGREE / 2 + 1; i < DEGREE; ++i) {
+            second_child->keys[i - (DEGREE / 2 + 1)] = temp[i];
+            second_child->keys_count++;
+        }
+
+        BTreeNode *new_root = b_tree_node_create();
+        new_root->keys[0] = middle;
+        new_root->keys_count++;
+
+        // Linking
+        first_child->parent = new_root;
+        second_child->parent = new_root;
+        new_root->children[0] = first_child;
+        new_root->children[1] = second_child;
+        new_root->children_count = 2;
+        new_root->type_of_node = NODE;
+
+        free(node);
+
+        node = new_root;
+    }
 }
 
 void b_tree_add(BTree *tree, size_t value) {
@@ -81,61 +129,9 @@ void b_tree_add(BTree *tree, size_t value) {
         return;
     }
 
-    // if root is null, add one with value as first key
+    // if root is null, add a new one with value as first key
     if (tree->root) {
-        size_t keys_count = tree->root->keys_count;
-        size_t *keys = tree->root->keys;
-
-        // return if value in root
-        for (size_t i = 0; i < keys_count; ++i) {
-            if (tree->root->keys[i] == value) {
-                return;
-            }
-        }
-
-        // try to insert in root
-        if (keys_count < DEGREE - 1) {
-            keys[keys_count] = value;
-            qsort(keys, keys_count + 1, sizeof(size_t), compare_size_t);
-            tree->root->keys_count++;
-        } else {
-            // insert virtually
-            size_t temp[DEGREE];
-            memcpy(temp, keys, keys_count * sizeof(size_t));
-            temp[keys_count] = value;
-            qsort(temp, DEGREE, sizeof(size_t), compare_size_t);
-            // determine middle
-            size_t middle = temp[DEGREE / 2];
-
-            // extract middle, create new root and split old one
-            BTreeNode *first_child = b_tree_node_create();
-            for (size_t i = 0; i < DEGREE / 2; ++i) {
-                first_child->keys[i] = temp[i];
-                first_child->keys_count++;
-            }
-
-            BTreeNode *second_child = b_tree_node_create();
-            for (size_t i = DEGREE / 2 + 1; i < DEGREE; ++i) {
-                second_child->keys[i - (DEGREE / 2 + 1)] = temp[i];
-                second_child->keys_count++;
-            }
-
-            BTreeNode *new_root = b_tree_node_create();
-            new_root->keys[0] = middle;
-            new_root->keys_count++;
-
-            // Linking
-            first_child->parent = new_root;
-            second_child->parent = new_root;
-            new_root->children[0] = first_child;
-            new_root->children[1] = second_child;
-            new_root->children_count = 2;
-            new_root->type = NODE;
-
-            free(tree->root);
-
-            tree->root = new_root;
-        }
+        b_tree_insert(tree->root, value);
     } else {
         tree->root = b_tree_node_create();
         tree->root->keys[0] = value;
@@ -144,10 +140,6 @@ void b_tree_add(BTree *tree, size_t value) {
 
 }
 
-
-/// Destroys a node and its child nodes recursively
-/// \param node The node to destroy
-/// \return A NULL pointer to clean up the node pointer
 BTreeNode *b_tree_node_destroy_recursively(BTreeNode *node) {
     if (node) {
         for (size_t i = 0; i < node->children_count; ++i) {
@@ -158,9 +150,6 @@ BTreeNode *b_tree_node_destroy_recursively(BTreeNode *node) {
     return NULL;
 }
 
-/// Creates a new n-ary tree
-/// \param degree The degree
-/// \return A pointer to the new tree or NULL in case of memory error or if the degree is invalid (lower than 2)
 BTree *b_tree_create() {
 
     BTree *result = malloc(sizeof(BTree));
@@ -292,7 +281,7 @@ void b_tree_nodes_print(BTreeNode *node, size_t depth){
         b_tree_node_keys_print(node);
 
         // print the last child
-        b_tree_nodes_print(node->children[node->children_count - 1], depth + 1);
+        b_tree_nodes_print(node->children[node->keys_count], depth + 1);
     }
 }
 
@@ -341,15 +330,15 @@ int parse_config(BTree *tree) {
 
     char *line = NULL;
     size_t line_length = 0;
+
     while (getline(&line, &line_length, config) != -1) {
         char *end;
-        long input = strtol(line + 1, &end, 10);
-        if (*line == 'i') {
-            printf("Integer\n");
-        } else if (*line == '+') {
-            printf("Adding %ld\n", input);
+        size_t input = (size_t) strtol(line + 1, &end, 10);
+        if (*line == '+') {
+            printf("Adding %zu\n", input);
+            b_tree_add(tree, input);
         } else if (*line == '-') {
-            printf("Removing %ld\n", input);
+            printf("Removing %zu\n", input);
         }
     }
 
@@ -358,12 +347,28 @@ int parse_config(BTree *tree) {
     return 0;
 }
 
+data_type get_input_type() {
+    FILE *config = fopen("b_tree.config", "r");
+    if (config == NULL)
+        return invalid;
+
+    int identifier = fgetc(config);
+    fclose(config);
+
+    return identifier == 'i' ? int_type
+          : identifier == 'f' ? float_type
+          : identifier == 's' ? string_type
+          : invalid;
+}
+
 int main() {
 
     BTree *tree = b_tree_create();
-    if (parse_config(tree)) {
+
+    int status = parse_config(tree);
+    if (status) {
         b_tree_destroy(tree);
-        perror("Error: Config file could not be opened!\n");
+        printf(status == 1 ? "Error: Config file could not be opened!\n" : "Error: Malformed config file!\n");
         return 1;
     }
 
