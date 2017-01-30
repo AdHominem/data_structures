@@ -1,6 +1,27 @@
+#define _GNU_SOURCE
 #include <memory.h>
-#include "data_structures.h"
 #include <stdbool.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <assert.h>
+#include <sys/types.h>
+
+#define DEGREE 3
+
+typedef struct b_tree_node BTreeNode;
+typedef enum {NODE, LEAF} node_type;
+struct b_tree_node {
+    node_type type;
+    size_t children_count;
+    size_t keys_count;
+    size_t keys[DEGREE - 1];
+    BTreeNode *children[DEGREE];
+    BTreeNode *parent;
+};
+
+typedef struct b_tree {
+    BTreeNode *root;
+} BTree;
 
 int compare_size_t(const void *first, const void *second) {
     size_t a = *(size_t*) first;
@@ -35,6 +56,23 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, size_t value) {
 
 BTreeNode *b_tree_search(BTree *tree, size_t value) {
     return b_tree_search_internal(tree->root, value);
+}
+
+/// Creates a new node of given degree
+/// \param degree The degree of the node
+/// \return A pointer to the new node or NULL in case of memory allocation failure
+BTreeNode *b_tree_node_create() {
+
+    BTreeNode *result = malloc(sizeof(BTreeNode));
+    if (result == NULL) {
+        return NULL;
+    }
+
+    result->type = LEAF;
+    result->children_count = 0;
+    result->keys_count = 0;
+    result->parent = NULL;
+    return result;
 }
 
 void b_tree_add(BTree *tree, size_t value) {
@@ -106,19 +144,232 @@ void b_tree_add(BTree *tree, size_t value) {
 
 }
 
+
+/// Destroys a node and its child nodes recursively
+/// \param node The node to destroy
+/// \return A NULL pointer to clean up the node pointer
+BTreeNode *b_tree_node_destroy_recursively(BTreeNode *node) {
+    if (node) {
+        for (size_t i = 0; i < node->children_count; ++i) {
+            b_tree_node_destroy_recursively(node->children[i]);
+        }
+    }
+    free(node);
+    return NULL;
+}
+
+/// Creates a new n-ary tree
+/// \param degree The degree
+/// \return A pointer to the new tree or NULL in case of memory error or if the degree is invalid (lower than 2)
+BTree *b_tree_create() {
+
+    BTree *result = malloc(sizeof(BTree));
+    if (result == NULL) {
+        return NULL;
+    }
+
+    result->root = NULL;
+    return result;
+}
+
+/// Destroys the tree, recursively destroying its nodes
+/// \param tree The tree to destroy
+/// \return A NULL pointer to clean up the tree pointer
+BTree *b_tree_destroy(BTree *tree) {
+    if (tree) {
+        tree->root = b_tree_node_destroy_recursively(tree->root);
+    }
+    free(tree);
+    return NULL;
+}
+
+// FUNCTIONS
+
+/// Prints tree_node keys, also showing how many of the key slots are still unset
+/// \param node The node whose keys are to be printed
+void b_tree_node_keys_print(BTreeNode *node) {
+    printf("[");
+    for (size_t j = 0; j < DEGREE - 1; ++j) {
+        if (j < node->keys_count) {
+            printf("%zu", node->keys[j]);
+        } else {
+            printf(" ");
+        }
+
+        if (j != node->keys_count - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
+}
+//
+///// Checks in which child tree_node the value may fit, or if it fits inside the key array.
+///// Will create a new child tree_node if necessary.
+///// \param node The node from which to start insertion
+///// \param value The value to insert
+///// \return 0 if insertion was successful or 1 if creating a new node was impossible due to memory error and 2 if the
+///// given node was NULL and 3 if the function terminates unexpectedly
+//int b_tree_add_internal(BTreeNode *node, int value) {
+//
+//    if (!node) {
+//        return 2;
+//    }
+//
+//    for (size_t i = 0; i < node->degree - 1; i++) {
+//
+//        if (i == node->last_key_index) {
+//            node->keys->elements[i] = value;
+//            node->last_key_index += 1;
+//            return 0;
+//        }
+//        else if (node->keys->elements[i] >= value) {
+//            if (node->children->elements[i] != NULL) {
+//                return b_tree_add_internal(node->children->elements[i], value);
+//            }
+//            else {
+//                node->children->elements[i] = b_tree_node_create(node->degree);
+//                if (node->children->elements[i] == NULL) {
+//                    return 1;
+//                }
+//                node->children->elements[i]->keys->elements[0] = value;
+//                node->children->elements[i]->last_key_index += 1;
+//                return 0;
+//            }
+//        }
+//        else if (i == node->degree - 2){
+//            if (node->children->elements[i + 1] != NULL) {
+//                return b_tree_add_internal(node->children->elements[i + 1], value);
+//            } else {
+//                node->children->elements[i + 1] = b_tree_node_create(node->degree);
+//                if (node->children->elements[i + 1] == NULL) {
+//                    return 1;
+//                }
+//                node->children->elements[i + 1]->keys->elements[0] = value;
+//                node->children->elements[i + 1]->last_key_index += 1;
+//                return 0;
+//            }
+//        }
+//    }
+//
+//    return 3;
+//}
+//
+///// Adds a new value to the tree and creates a root tree_node if the tree is empty
+///// \param tree The tree to extend
+///// \param value The value to insert
+///// \return 0 if insertion was successful, else 1 in case of memory error
+//int b_tree_add(BTree *tree, int value) {
+//    if (tree->root == NULL) {
+//        tree->root = b_tree_node_create(tree->degree);
+//        if (tree->root == NULL) {
+//            return 1;
+//        }
+//        tree->root->keys->elements[0] = value;
+//        tree->root->last_key_index = 1;
+//    } else {
+//        if (b_tree_add_internal(tree->root, value)) {
+//            return 1;
+//        }
+//    }
+//    return 0;
+//}
+
+/// Prints all the nodes recursively, indenting them for better readability
+/// \param node The node to start printing from
+/// \param depth The depth of printing, this should be 1 initially
+void b_tree_nodes_print(BTreeNode *node, size_t depth){
+    if (node) {
+
+        // call this on all child nodes except for the last
+        for (size_t i = 0; i+1 < node->children_count; i++) {
+            b_tree_nodes_print(node->children[i], depth + 1);
+        }
+
+        for (size_t indentations = 1; indentations < depth; indentations++) {
+            printf("\t");
+        }
+
+        b_tree_node_keys_print(node);
+
+        // print the last child
+        b_tree_nodes_print(node->children[node->children_count - 1], depth + 1);
+    }
+}
+
+/// Prints all the nodes of a tree recursively, indenting them for better readability
+/// \param tree The tree to print
+void b_tree_print(BTree *tree) {
+    b_tree_nodes_print(tree->root, 1);
+}
+
+//BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
+//
+//    if (!node) {
+//        return NULL;
+//    }
+//
+//    for (size_t i = 0; i < node->last_key_index; ++i) {
+//
+//        // Check if value is in the keys
+//        if (node->keys->elements[i] == value) {
+//            return node;
+//        }
+//
+//            // Else check if it's too small to fit, so we need to go down the left subtree
+//        else if (value < node->keys->elements[i]) {
+//            return b_tree_search_internal(node->children->elements[i], value);
+//        }
+//
+//            // Else check if we are at the last key
+//        else if (i == node->degree - 2) {
+//            // Now value is bigger than the last element and could only be in the right child
+//            // Only the last key in the array can have a right child
+//            return b_tree_search_internal(node->children->elements[i + 1], value);
+//        }
+//    }
+//    return NULL;
+//}
+//
+//// Returns a pointer to the containing TreeNode or NULL, if value not in graph
+//BTreeNode *b_tree_search(BTree *tree, int value) {
+//    return b_tree_search_internal(tree->root, value);
+//}
+
+int parse_config(BTree *tree) {
+    FILE *config = fopen("b_tree.config", "r");
+    if (config == NULL) return 1;
+
+    char *line = NULL;
+    size_t line_length = 0;
+    while (getline(&line, &line_length, config) != -1) {
+        char *end;
+        long input = strtol(line + 1, &end, 10);
+        if (*line == 'i') {
+            printf("Integer\n");
+        } else if (*line == '+') {
+            printf("Adding %ld\n", input);
+        } else if (*line == '-') {
+            printf("Removing %ld\n", input);
+        }
+    }
+
+    fclose(config);
+    free(line);
+    return 0;
+}
+
 int main() {
 
     BTree *tree = b_tree_create();
-    b_tree_add(tree, 1);
-    b_tree_add(tree, 4);
-    b_tree_add(tree, 40);
-    b_tree_add(tree, 6);
-    b_tree_add(tree, 10);
-    b_tree_add(tree, 8);
+    if (parse_config(tree)) {
+        b_tree_destroy(tree);
+        perror("Error: Config file could not be opened!\n");
+        return 1;
+    }
+
     b_tree_print(tree);
-    assert(b_tree_search(tree, 40));
-    assert(!b_tree_search(tree, 42));
 
     b_tree_destroy(tree);
     return 0;
 }
+
