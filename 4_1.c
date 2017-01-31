@@ -5,6 +5,14 @@
 #include <stdio.h>
 #include <assert.h>
 #include <sys/types.h>
+#include <values.h>
+#include <asm/errno.h>
+#include <errno.h>
+#include <string.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdint.h>
+
 
 #define DEGREE 3
 
@@ -123,7 +131,7 @@ void b_tree_insert(BTreeNode *node, size_t value) {
     }
 }
 
-void b_tree_add(BTree *tree, size_t value) {
+void b_tree_add(BTree *tree, int value) {
 
     if (b_tree_search(tree, value)) {
         return;
@@ -324,26 +332,33 @@ void b_tree_print(BTree *tree) {
 //    return b_tree_search_internal(tree->root, value);
 //}
 
+int string_to_integer(const char *string, int *integer) {
+    char *p;
+    const long value = strtol(string, &p, 10);
+    if (!(p == string || LONG_MIN == value || LONG_MAX == value || value > INT_MAX || value < INT_MIN)) {
+        *integer = (int) value;
+        return 0;
+    }
+    return 1;
+}
+
 int parse_config(BTree *tree) {
     FILE *config = fopen("b_tree.config", "r");
     if (config == NULL) return 1;
 
-    char *line = NULL;
-    size_t line_length = 0;
-
-    while (getline(&line, &line_length, config) != -1) {
-        char *end;
-        size_t input = (size_t) strtol(line + 1, &end, 10);
-        if (*line == '+') {
-            printf("Adding %zu\n", input);
+    char line[BUFSIZ];
+    while (fgets(line, BUFSIZ, config)) {
+        int input;
+        if (*line == '-' && !string_to_integer(line + 1, &input)) {
+            printf("Removing %d\n", input);
+            //b_tree_remove(tree, input);
+        } else if (!string_to_integer(line, &input)) {
+            printf("Adding %d\n", input);
             b_tree_add(tree, input);
-        } else if (*line == '-') {
-            printf("Removing %zu\n", input);
         }
     }
 
     fclose(config);
-    free(line);
     return 0;
 }
 
