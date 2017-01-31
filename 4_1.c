@@ -23,7 +23,7 @@ struct b_tree_node {
     node_type type_of_node;
     size_t children_count;
     size_t keys_count;
-    size_t keys[DEGREE - 1];
+    int keys[DEGREE - 1];
     BTreeNode *children[DEGREE];
     BTreeNode *parent;
 };
@@ -32,13 +32,13 @@ typedef struct b_tree {
     BTreeNode *root;
 } BTree;
 
-int compare_size_t(const void *first, const void *second) {
-    size_t a = *(size_t*) first;
-    size_t b = *(size_t*) second;
+int compare_ints(const void *first, const void *second) {
+    int a = *(int*) first;
+    int b = *(int*) second;
     return a < b ? -1 : a > b;
 }
 
-int value_in_array(size_t *array, size_t size, size_t value) {
+int value_in_array(int *array, size_t size, int value) {
     for (size_t i = 0; i < size; ++i) {
         if (array[i] == value) {
             return true;
@@ -47,10 +47,11 @@ int value_in_array(size_t *array, size_t size, size_t value) {
     return false;
 }
 
-BTreeNode *b_tree_search_internal(BTreeNode *node, size_t value) {
-    if (node == NULL) {
-        return NULL;
-    } else if (value_in_array(node->keys, node->keys_count, value)) {
+// this will ALWAYS return a node since there is always a node where a value is expected to be
+BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
+
+    // if we are at a leaf, return. we can not go down further!
+    if (node->type_of_node == LEAF) {
         return node;
     } else {
         //search in left subtrees
@@ -64,7 +65,8 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, size_t value) {
     }
 }
 
-BTreeNode *b_tree_search(BTree *tree, size_t value) {
+// Checks if a given value is in the tree and returns a pointer to the Node which is expected to contain it
+BTreeNode *b_tree_search(BTree *tree, int value) {
     return b_tree_search_internal(tree->root, value);
 }
 
@@ -82,23 +84,23 @@ BTreeNode *b_tree_node_create() {
     return result;
 }
 
-void b_tree_insert(BTreeNode *node, size_t value) {
+void b_tree_insert(BTreeNode *node, int value) {
     size_t keys_count = node->keys_count;
-    size_t *keys = node->keys;
+    int *keys = node->keys;
 
-    // try to insert in root
+    // try to insert in node
     if (keys_count < DEGREE - 1) {
         keys[keys_count] = value;
-        qsort(keys, keys_count + 1, sizeof(size_t), compare_size_t);
+        qsort(keys, keys_count + 1, sizeof(int), compare_ints);
         node->keys_count++;
     } else {
-        // insert virtually
-        size_t temp[DEGREE];
+        // if it doesn't fit, insert virtually
+        int temp[DEGREE];
         memcpy(temp, keys, keys_count * sizeof(size_t));
         temp[keys_count] = value;
-        qsort(temp, DEGREE, sizeof(size_t), compare_size_t);
+        qsort(temp, DEGREE, sizeof(size_t), compare_ints);
         // determine middle
-        size_t middle = temp[DEGREE / 2];
+        int middle = temp[DEGREE / 2];
 
         // extract middle, create new root and split old one
         BTreeNode *first_child = b_tree_node_create();
@@ -132,15 +134,16 @@ void b_tree_insert(BTreeNode *node, size_t value) {
 }
 
 void b_tree_add(BTree *tree, int value) {
-
-    if (b_tree_search(tree, value)) {
-        return;
-    }
-
-    // if root is null, add a new one with value as first key
     if (tree->root) {
-        b_tree_insert(tree->root, value);
+        // get the fitting node
+        BTreeNode *node = b_tree_search(tree, value);
+
+        // add if the value is not already inside
+        if (!value_in_array(node->keys, node->keys_count, value)) {
+            b_tree_insert(node, value);
+        }
     } else {
+        // if root is null, add a new one with value as first key
         tree->root = b_tree_node_create();
         tree->root->keys[0] = value;
         tree->root->keys_count++;
@@ -188,7 +191,7 @@ void b_tree_node_keys_print(BTreeNode *node) {
     printf("[");
     for (size_t j = 0; j < DEGREE - 1; ++j) {
         if (j < node->keys_count) {
-            printf("%zu", node->keys[j]);
+            printf("%d", node->keys[j]);
         } else {
             printf(" ");
         }
