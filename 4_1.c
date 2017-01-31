@@ -84,7 +84,29 @@ BTreeNode *b_tree_node_create() {
     return result;
 }
 
-void b_tree_insert(BTreeNode *node, int value) {
+ssize_t get_index_for_value(int array[DEGREE], int value) {
+    for (int i = 0; i < DEGREE; ++i) {
+        if (array[i] == value) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void b_tree_link_child(BTreeNode *parent, BTreeNode *child, ssize_t index) {
+    child->parent = parent;
+    parent->children[index] = child;
+}
+
+/*
+ * There are 4 cases:
+ * - fits into key array
+ * - root node flows over (easy split, 2 children will be created)
+ * - regular node flows over
+ *      pass middle value to the parent.
+ *      In this case the parent will ALWAYS have DEGREE + 1 children and needs to
+ */
+void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
     size_t keys_count = node->keys_count;
     int *keys = node->keys;
 
@@ -98,7 +120,8 @@ void b_tree_insert(BTreeNode *node, int value) {
         int temp[DEGREE];
         memcpy(temp, keys, keys_count * sizeof(size_t));
         temp[keys_count] = value;
-        qsort(temp, DEGREE, sizeof(size_t), compare_ints);
+        qsort(temp, DEGREE, sizeof(int), compare_ints);
+
         // determine middle
         int middle = temp[DEGREE / 2];
 
@@ -115,21 +138,34 @@ void b_tree_insert(BTreeNode *node, int value) {
             second_child->keys_count++;
         }
 
-        BTreeNode *new_root = b_tree_node_create();
-        new_root->keys[0] = middle;
-        new_root->keys_count++;
+        // we only need to create a new root when the old node was the root
+        if (node->parent == NULL) {
+            node = b_tree_node_create();
+            node->keys[0] = middle;
+            node->keys_count++;
 
-        // Linking
-        first_child->parent = new_root;
-        second_child->parent = new_root;
-        new_root->children[0] = first_child;
-        new_root->children[1] = second_child;
-        new_root->children_count = 2;
-        new_root->type_of_node = NODE;
+            // Linking
+            first_child->parent = node;
+            second_child->parent = node;
+            b_tree_link_child(node, first_child, 0);
+            b_tree_link_child(node, second_child, 1);
+            node->children_count = 2;
+            node->type_of_node = NODE;
 
-        free(node);
+            tree->root = node;
+        } else {
+            // otherwise we just have to add the middle to the parent node
+            // careful: linking here depends on the position of the middle element
+            ssize_t middle_index = get_index_for_value(temp, middle);
+            if (middle_index == -1) exit(1);
 
-        node = new_root;
+            // Linking
+            b_tree_link_child(node->parent, first_child, middle_index);
+            b_tree_link_child(node->parent, second_child, middle_index + 1);
+            node->parent->children_count += 1;
+
+            b_tree_insert(node->parent, middle, tree);
+        }
     }
 }
 
@@ -140,7 +176,8 @@ void b_tree_add(BTree *tree, int value) {
 
         // add if the value is not already inside
         if (!value_in_array(node->keys, node->keys_count, value)) {
-            b_tree_insert(node, value);
+            // if the node is the root, we need to link a bit different. That's why we need to pass the tree
+            b_tree_insert(node, value, tree);
         }
     } else {
         // if root is null, add a new one with value as first key
