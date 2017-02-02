@@ -24,13 +24,142 @@ struct b_tree_node {
     size_t children_count;
     size_t keys_count;
     int keys[DEGREE - 1];
-    BTreeNode *children[DEGREE];
+    // +1 because in case of overflow the parent node can temporarily have DEGREE + 1 children
+    BTreeNode *children[DEGREE + 1];
     BTreeNode *parent;
 };
 
 typedef struct b_tree {
     BTreeNode *root;
 } BTree;
+
+typedef struct linked_list_node LinkedListNode;
+
+struct linked_list_node {
+    BTreeNode * value;
+    LinkedListNode *next;
+};
+
+typedef struct linked_list {
+    LinkedListNode *head;
+} LinkedList;
+
+LinkedListNode *linked_list_node_create(BTreeNode *value) {
+    LinkedListNode *result = malloc(sizeof(LinkedListNode));
+    if (result == NULL) {
+        perror("Could not allocate memory!");
+        return NULL;
+    }
+
+    result->value = value;
+    result->next = NULL;
+
+    return result;
+}
+
+LinkedListNode *linked_list_node_destroy_recursively(LinkedListNode *node) {
+    if (node) {
+        node->next = linked_list_node_destroy_recursively(node->next);
+    }
+    free(node);
+    return NULL;
+}
+
+LinkedList *linked_list_create() {
+    return calloc(1, sizeof(LinkedList));
+}
+
+LinkedList *linked_list_destroy(LinkedList *list) {
+    if (list) {
+        list->head = linked_list_node_destroy_recursively(list->head);
+    }
+    free(list);
+    return NULL;
+}
+
+size_t linked_list_get_length(LinkedList *list) {
+    LinkedListNode *head = list->head;
+    size_t result = 0;
+
+    while (head != NULL) {
+        head = head->next;
+        ++result;
+    }
+
+    return result;
+}
+
+int linked_list_insert(LinkedList *list, BTreeNode * value, size_t index) {
+
+    // Catch index out of range
+    if (index > linked_list_get_length(list)) {
+        perror("List index out of range!");
+        return 2;
+    }
+
+    LinkedListNode *head = list->head;
+    LinkedListNode *to_insert = linked_list_node_create(value);
+    if (to_insert == NULL) {
+        return 1;
+    }
+
+    // Catch append to front case
+    // Else insert normally
+    if (index == 0) {
+        to_insert->next = head;
+        list->head = to_insert;
+    } else {
+        LinkedListNode *before = head;
+
+        for (size_t i = 0; i < index; ++i) {
+            before = head;
+            head = head->next;
+        }
+
+        before->next = to_insert;
+        to_insert->next = head;
+    }
+    return 0;
+}
+
+void linked_list_as_array(LinkedList *list, BTreeNode *array[DEGREE + 1]) {
+
+    LinkedListNode *node = list->head;
+
+    for (size_t i = 0; i < linked_list_get_length(list); ++i) {
+        array[i] = node->value;
+        node = node->next;
+    }
+}
+
+void linked_list_add(LinkedList *list, BTreeNode * value) {
+    linked_list_insert(list, value, linked_list_get_length(list));
+}
+
+int linked_list_contains(LinkedList *list, BTreeNode * value) {
+    LinkedListNode *current = list->head;
+    while (current) {
+        if (current->value == value) {
+            return 1;
+        }
+        current = current->next;
+    }
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int compare_ints(const void *first, const void *second) {
     int a = *(int*) first;
@@ -85,7 +214,7 @@ BTreeNode *b_tree_node_create() {
 }
 
 ssize_t get_index_for_value(int array[DEGREE], int value) {
-    for (int i = 0; i < DEGREE; ++i) {
+    for (size_t i = 0; i < DEGREE; ++i) {
         if (array[i] == value) {
             return i;
         }
@@ -93,9 +222,58 @@ ssize_t get_index_for_value(int array[DEGREE], int value) {
     return -1;
 }
 
-void b_tree_link_child(BTreeNode *parent, BTreeNode *child, ssize_t index) {
+void insert_into_array(BTreeNode *array[DEGREE + 1], size_t array_size, size_t index, BTreeNode *to_insert) {
+    LinkedList *list = linked_list_create();
+    for (size_t i = 0; i < array_size; ++i) {
+        linked_list_add(list, array[i]);
+    }
+    assert(linked_list_get_length(list) <= array_size);
+    linked_list_insert(list, to_insert, index);
+    linked_list_as_array(list, array);
+}
+
+// does all the linking for two nodes and also updates the LEAF / NODE status
+// note that this will not change the children count since you can just overwrite a child reference
+void b_tree_link_child(BTreeNode *parent, BTreeNode *child, size_t index) {
+    child->parent = parent;
+    insert_into_array(parent->children, parent->children_count, index, child);
+    parent->type_of_node = NODE;
+}
+
+void b_tree_overwrite_child(BTreeNode *parent, BTreeNode *child, size_t index) {
     child->parent = parent;
     parent->children[index] = child;
+    parent->type_of_node = NODE;
+}
+
+ssize_t get_index_for_node(BTreeNode **node_array, size_t size, BTreeNode *node) {
+    if (node == NULL) return -1;
+
+    for (size_t i = 0; i < size; ++i) {
+        if (node_array[i] == node) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+/// Prints tree_node keys, also showing how many of the key slots are still unset
+/// \param node The node whose keys are to be printed
+void b_tree_node_keys_print(BTreeNode *node) {
+    printf("[");
+    for (size_t j = 0; j < DEGREE - 1; ++j) {
+        if (j < node->keys_count) {
+            printf("%d", node->keys[j]);
+        } else {
+            printf(" ");
+        }
+
+        if (j != node->keys_count - 1) {
+            printf(", ");
+        }
+    }
+    printf("]\n");
 }
 
 /*
@@ -116,7 +294,7 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
         qsort(keys, keys_count + 1, sizeof(int), compare_ints);
         node->keys_count++;
     } else {
-        // if it doesn't fit, insert virtually
+        // if it doesn't fit, make a temp array to hold all the values
         int temp[DEGREE];
         memcpy(temp, keys, keys_count * sizeof(size_t));
         temp[keys_count] = value;
@@ -125,17 +303,37 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
         // determine middle
         int middle = temp[DEGREE / 2];
 
-        // extract middle, create new root and split old one
+        // create left child
         BTreeNode *first_child = b_tree_node_create();
         for (size_t i = 0; i < DEGREE / 2; ++i) {
             first_child->keys[i] = temp[i];
             first_child->keys_count++;
         }
 
+        // create right child
         BTreeNode *second_child = b_tree_node_create();
         for (size_t i = DEGREE / 2 + 1; i < DEGREE; ++i) {
             second_child->keys[i - (DEGREE / 2 + 1)] = temp[i];
             second_child->keys_count++;
+        }
+
+        // if i have DEGREE + 1 children that means i need to restructure the tree
+        // that means linking the children appropriately
+        if (node->children_count == DEGREE + 1) {
+            b_tree_node_keys_print(node);
+            printf(" here, i have too many children, will restructure!\n");
+
+            // left half of children go to first child
+            for (size_t i = 0; i < (DEGREE + 1) / 2; ++i) {
+                b_tree_link_child(first_child, node->children[i], i);
+                first_child->children_count++;
+            }
+
+            // right half of children go to second child
+            for (size_t i = (DEGREE + 1) / 2, j = 0; i < DEGREE + 1; ++i, ++j) {
+                b_tree_link_child(second_child, node->children[i], j);
+                second_child->children_count++;
+            }
         }
 
         // we only need to create a new root when the old node was the root
@@ -145,26 +343,27 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
             node->keys_count++;
 
             // Linking
-            first_child->parent = node;
-            second_child->parent = node;
             b_tree_link_child(node, first_child, 0);
+            node->children_count++;
             b_tree_link_child(node, second_child, 1);
-            node->children_count = 2;
+            node->children_count++;
             node->type_of_node = NODE;
 
             tree->root = node;
         } else {
             // otherwise we just have to add the middle to the parent node
-            // careful: linking here depends on the position of the middle element
-            ssize_t middle_index = get_index_for_value(temp, middle);
-            if (middle_index == -1) exit(1);
+            ssize_t insertion_index = get_index_for_node(node->parent->children, node->parent->children_count, node);
+            if (insertion_index == -1) {
+                exit(1);
+            }
 
             // Linking
-            b_tree_link_child(node->parent, first_child, middle_index);
-            b_tree_link_child(node->parent, second_child, middle_index + 1);
+            b_tree_overwrite_child(node->parent, first_child, (size_t) insertion_index);
+            b_tree_link_child(node->parent, second_child, (size_t) insertion_index + 1);
             node->parent->children_count += 1;
 
             b_tree_insert(node->parent, middle, tree);
+            free(node);
         }
     }
 }
@@ -220,97 +419,6 @@ BTree *b_tree_destroy(BTree *tree) {
     return NULL;
 }
 
-// FUNCTIONS
-
-/// Prints tree_node keys, also showing how many of the key slots are still unset
-/// \param node The node whose keys are to be printed
-void b_tree_node_keys_print(BTreeNode *node) {
-    printf("[");
-    for (size_t j = 0; j < DEGREE - 1; ++j) {
-        if (j < node->keys_count) {
-            printf("%d", node->keys[j]);
-        } else {
-            printf(" ");
-        }
-
-        if (j != node->keys_count - 1) {
-            printf(", ");
-        }
-    }
-    printf("]\n");
-}
-//
-///// Checks in which child tree_node the value may fit, or if it fits inside the key array.
-///// Will create a new child tree_node if necessary.
-///// \param node The node from which to start insertion
-///// \param value The value to insert
-///// \return 0 if insertion was successful or 1 if creating a new node was impossible due to memory error and 2 if the
-///// given node was NULL and 3 if the function terminates unexpectedly
-//int b_tree_add_internal(BTreeNode *node, int value) {
-//
-//    if (!node) {
-//        return 2;
-//    }
-//
-//    for (size_t i = 0; i < node->degree - 1; i++) {
-//
-//        if (i == node->last_key_index) {
-//            node->keys->elements[i] = value;
-//            node->last_key_index += 1;
-//            return 0;
-//        }
-//        else if (node->keys->elements[i] >= value) {
-//            if (node->children->elements[i] != NULL) {
-//                return b_tree_add_internal(node->children->elements[i], value);
-//            }
-//            else {
-//                node->children->elements[i] = b_tree_node_create(node->degree);
-//                if (node->children->elements[i] == NULL) {
-//                    return 1;
-//                }
-//                node->children->elements[i]->keys->elements[0] = value;
-//                node->children->elements[i]->last_key_index += 1;
-//                return 0;
-//            }
-//        }
-//        else if (i == node->degree - 2){
-//            if (node->children->elements[i + 1] != NULL) {
-//                return b_tree_add_internal(node->children->elements[i + 1], value);
-//            } else {
-//                node->children->elements[i + 1] = b_tree_node_create(node->degree);
-//                if (node->children->elements[i + 1] == NULL) {
-//                    return 1;
-//                }
-//                node->children->elements[i + 1]->keys->elements[0] = value;
-//                node->children->elements[i + 1]->last_key_index += 1;
-//                return 0;
-//            }
-//        }
-//    }
-//
-//    return 3;
-//}
-//
-///// Adds a new value to the tree and creates a root tree_node if the tree is empty
-///// \param tree The tree to extend
-///// \param value The value to insert
-///// \return 0 if insertion was successful, else 1 in case of memory error
-//int b_tree_add(BTree *tree, int value) {
-//    if (tree->root == NULL) {
-//        tree->root = b_tree_node_create(tree->degree);
-//        if (tree->root == NULL) {
-//            return 1;
-//        }
-//        tree->root->keys->elements[0] = value;
-//        tree->root->last_key_index = 1;
-//    } else {
-//        if (b_tree_add_internal(tree->root, value)) {
-//            return 1;
-//        }
-//    }
-//    return 0;
-//}
-
 /// Prints all the nodes recursively, indenting them for better readability
 /// \param node The node to start printing from
 /// \param depth The depth of printing, this should be 1 initially
@@ -328,8 +436,10 @@ void b_tree_nodes_print(BTreeNode *node, size_t depth){
 
         b_tree_node_keys_print(node);
 
-        // print the last child
-        b_tree_nodes_print(node->children[node->keys_count], depth + 1);
+        // every node except a leaf always has a last child, too
+        if (node->type_of_node == NODE) {
+            b_tree_nodes_print(node->children[node->keys_count], depth + 1);
+        }
     }
 }
 
@@ -338,39 +448,6 @@ void b_tree_nodes_print(BTreeNode *node, size_t depth){
 void b_tree_print(BTree *tree) {
     b_tree_nodes_print(tree->root, 1);
 }
-
-//BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
-//
-//    if (!node) {
-//        return NULL;
-//    }
-//
-//    for (size_t i = 0; i < node->last_key_index; ++i) {
-//
-//        // Check if value is in the keys
-//        if (node->keys->elements[i] == value) {
-//            return node;
-//        }
-//
-//            // Else check if it's too small to fit, so we need to go down the left subtree
-//        else if (value < node->keys->elements[i]) {
-//            return b_tree_search_internal(node->children->elements[i], value);
-//        }
-//
-//            // Else check if we are at the last key
-//        else if (i == node->degree - 2) {
-//            // Now value is bigger than the last element and could only be in the right child
-//            // Only the last key in the array can have a right child
-//            return b_tree_search_internal(node->children->elements[i + 1], value);
-//        }
-//    }
-//    return NULL;
-//}
-//
-//// Returns a pointer to the containing TreeNode or NULL, if value not in graph
-//BTreeNode *b_tree_search(BTree *tree, int value) {
-//    return b_tree_search_internal(tree->root, value);
-//}
 
 int string_to_integer(const char *string, int *integer) {
     char *p;
@@ -395,6 +472,7 @@ int parse_config(BTree *tree) {
         } else if (!string_to_integer(line, &input)) {
             printf("Adding %d\n", input);
             b_tree_add(tree, input);
+            b_tree_print(tree);
         }
     }
 
@@ -427,9 +505,11 @@ int main() {
         return 1;
     }
 
-    b_tree_print(tree);
+
 
     b_tree_destroy(tree);
     return 0;
 }
+
+
 
