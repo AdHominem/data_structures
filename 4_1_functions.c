@@ -2,6 +2,7 @@
 #include "4_1_helper.h"
 #include <memory.h>
 #include <stdio.h>
+#include <math.h>
 
 // this will ALWAYS return a node since there is always a node where a value is expected to be
 BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
@@ -95,27 +96,26 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
         qsort(temp, DEGREE, sizeof(int), compare_ints);
 
         // determine middle
-        int middle = temp[DEGREE / 2];
+        size_t middle_index = DEGREE / 2;
+        int middle = temp[middle_index];
 
         // create left child
         BTreeNode *first_child = b_tree_node_create();
-        for (size_t i = 0; i < DEGREE / 2; ++i) {
+        for (size_t i = 0; i < middle_index; ++i) {
             first_child->keys[i] = temp[i];
             first_child->keys_count++;
         }
 
         // create right child
         BTreeNode *second_child = b_tree_node_create();
-        for (size_t i = DEGREE / 2 + 1; i < DEGREE; ++i) {
-            second_child->keys[i - (DEGREE / 2 + 1)] = temp[i];
+        for (size_t i = middle_index + 1; i < DEGREE; ++i) {
+            second_child->keys[i - (middle_index + 1)] = temp[i];
             second_child->keys_count++;
         }
 
         // if i have DEGREE + 1 children that means i need to restructure the tree
         // that means linking the children appropriately
         if (node->children_count == DEGREE + 1) {
-            b_tree_node_keys_print(node);
-            printf(" here, i have too many children, will restructure!\n");
 
             // left half of children go to first child
             for (size_t i = 0; i < (DEGREE + 1) / 2; ++i) {
@@ -158,6 +158,37 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
 
             b_tree_insert(node->parent, middle, tree);
             free(node);
+        }
+    }
+}
+
+void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
+
+    if (node->type_of_node == LEAF) {
+        // Case 1: Leaf contains more than the minimum number of keys (ceil(DEGREE / 2) - 1)
+        if (node->keys_count >= ceil(DEGREE / 2)) {
+            printf("Easy deletion");
+        } else {
+            // if siblings can compensate
+                // we first need to make this node bigger!
+                // Search among the siblings for a dispensable outer key A.
+                // replace the outermost key B in parent with A and move B into this node
+                // then delete the key
+            // else
+                // move the extreme key from parent down
+        }
+    }
+}
+
+void b_tree_remove(BTree *tree, int value) {
+    if (tree->root) {
+        // get the fitting node
+        BTreeNode *node = b_tree_search(tree, value);
+
+        // remove if the value is inside
+        if (value_in_array(node->keys, node->keys_count, value)) {
+            // if the node is the root, we need to link a bit different. That's why we need to pass the tree
+            b_tree_remove_internal(node, value, tree);
         }
     }
 }
@@ -224,7 +255,6 @@ int parse_config(BTree *tree) {
         } else if (!string_to_integer(line, &input)) {
             printf("Adding %d\n", input);
             b_tree_add(tree, input);
-            b_tree_print(tree);
         }
     }
 

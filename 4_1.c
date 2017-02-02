@@ -14,7 +14,7 @@ int main() {
         return 1;
     }
 
-
+    b_tree_print(tree);
 
     b_tree_destroy(tree);
     return 0;
