@@ -227,7 +227,7 @@ int bucketsort(int *array, const size_t length) {
     // Put elements in buckets
     for (size_t i = 0; i < length; i++) {
         LinkedList *relevant_bucket = buckets[(size_t) (length * array[i])];
-        add_to_linked_list(relevant_bucket, array[i]);
+        linked_list_add(relevant_bucket, array[i]);
     }
 
     // Sort all buckets and insert them into the array

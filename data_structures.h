@@ -102,7 +102,7 @@ size_t linked_list_get_length(LinkedList *list) {
 /// \param value The value to insert
 /// \param index The index at which the insertion takes place
 /// \return 0 if insertion was successful, 2 if index was out of range and 1 if memory allocation failed
-int insert_at_linked_list(LinkedList *list, int value, size_t index) {
+int linked_list_insert(LinkedList *list, int value, size_t index) {
 
     // Catch index out of range
     if (index > linked_list_get_length(list)) {
@@ -189,8 +189,8 @@ void linked_list_as_array(LinkedList *list, int *array) {
 /// Wrapper for insert_at_linked_list() to append a value to the end
 /// \param list The target list
 /// \param value The value to append
-void add_to_linked_list(LinkedList *list, int value) {
-    insert_at_linked_list(list, value, linked_list_get_length(list));
+void linked_list_add(LinkedList *list, int value) {
+    linked_list_insert(list, value, linked_list_get_length(list));
 }
 
 /// Prints the linked list as a one line blank delimited string
@@ -891,7 +891,7 @@ AdjacencyList *create_alist() {
 /// \param to The node to which the edge goes
 void link_alnodes(AdjacencyListNode *from, AdjacencyListNode *to) {
     if (from && to && !linked_list_contains(from->successors, to->value)) {
-        add_to_linked_list(from->successors, to->value);
+        linked_list_add(from->successors, to->value);
     }
 }
 
@@ -915,7 +915,7 @@ typedef struct b_tree_node BTreeNode;
 typedef enum {NODE, LEAF} node_type;
 
 struct b_tree_node {
-    node_type type;
+    node_type type_of_node;
     size_t children_count;
     size_t keys_count;
     size_t keys[DEGREE - 1];
@@ -952,7 +952,7 @@ BTreeNode *b_tree_node_create() {
         return NULL;
     }
 
-    result->type = LEAF;
+    result->type_of_node = LEAF;
     result->children_count = 0;
     result->keys_count = 0;
     result->parent = NULL;
@@ -1197,7 +1197,7 @@ void hash_table_print(HashTable *hash_table) {
 /// \param parameters The parameters, the first element being the value to insert
 void hash_table_add(HashTable *hash_table, const int *parameters) {
     size_t row_index = hash_table->hash_function(parameters);
-    add_to_linked_list(hash_table->rows[row_index], parameters[0]);
+    linked_list_add(hash_table->rows[row_index], parameters[0]);
 }
 
 
