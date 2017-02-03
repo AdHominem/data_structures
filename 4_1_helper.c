@@ -186,15 +186,17 @@ void insert_into_array(BTreeNode *array[DEGREE + 1], size_t array_size, size_t i
 }
 
 // assumes that all values are unique in the array
-void delete_from_array(void *array, const size_t size, const void *value, const data_type type) {
+// note that this updates the size
+void delete_from_array(void *array, size_t *size, const void *value, const data_type type) {
 
     if (type == int_type) {
         int *cast_array = (int *) array;
         int cast_value = *((int*) value);
         int replace = false;
-        for (size_t i = 0; i < size; ++i) {
+        for (size_t i = 0; i < *size; ++i) {
             if (cast_array[i] == cast_value) {
                 replace = true;
+                --*size;
             }
 
             if (replace) {
