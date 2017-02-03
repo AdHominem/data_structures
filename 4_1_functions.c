@@ -229,13 +229,13 @@ void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
         if (index_in_parent < node->parent->keys_count) {
             // have right
             BTreeNode *right_sibling = node->parent->children[index_in_parent + 1];
-            if (right_sibling->keys_count >= ceil(DEGREE / 2)) {
+            if (right_sibling->keys_count > ceil(DEGREE / 2)) {
                 sibling = right_sibling;
             }
         } else if (index_in_parent > 0) {
             // have left
             BTreeNode *left_sibling = node->parent->children[index_in_parent - 1];
-            if (left_sibling->keys_count >= ceil(DEGREE / 2)) {
+            if (left_sibling->keys_count > ceil(DEGREE / 2)) {
                 sibling = left_sibling;
             }
         }
