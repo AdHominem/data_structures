@@ -215,23 +215,45 @@ void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
         // delete value
         delete_from_array(node_with_next_largest_value->keys, &node_with_next_largest_value->keys_count,
                           &next_largest_value, int_type);
+        node = node_with_next_largest_value;
     }
 
     // Overflow (less than ceil(DEGREE / 2) - 1)
-//    if (node->keys_count >= ceil(DEGREE / 2)) {
-//        printf("Easy deletion\n");
-//        // delete value
-//    } else {
-//        // Case 2: Leaf contains not enough keys so we have to somehow adjust it
-//        printf("Adjustment necessary!\n");
-//        // if siblings can compensate
-//        // we first need to make this node bigger!
-//        // Search among the siblings for a dispensable outer key A.
-//        // replace the outermost key B in parent with A and move B into this node
-//        // then delete the key
-//        // else
-//        // move the extreme key from parent down
-//    }
+    if (node->keys_count < ceil(DEGREE / 2)) {
+        // Leaf contains not enough keys so we have to somehow adjust it
+        printf("Underflow detected!\n");
+
+        size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
+        BTreeNode *sibling = NULL;
+
+        if (index_in_parent < node->parent->keys_count) {
+            // have right
+            BTreeNode *right_sibling = node->parent->children[index_in_parent + 1];
+            if (right_sibling->keys_count >= ceil(DEGREE / 2)) {
+                sibling = right_sibling;
+            }
+        } else if (index_in_parent > 0) {
+            // have left
+            BTreeNode *left_sibling = node->parent->children[index_in_parent - 1];
+            if (left_sibling->keys_count >= ceil(DEGREE / 2)) {
+                sibling = left_sibling;
+            }
+        }
+
+        // if siblings can compensate
+        if (sibling != NULL) {
+            printf("One sibling can compensate!\n");
+            // we first need to make this node bigger!
+            // Search among the siblings for a dispensable outer key A.
+            // replace the outermost key B in parent with A and move B into this node
+            // then delete the key
+        } else {
+            // else
+            // move the extreme key from parent down
+            printf("I have to merge with one sibling!\n");
+        }
+
+    }
 }
 
 void b_tree_remove(BTree *tree, int value) {
