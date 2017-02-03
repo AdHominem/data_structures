@@ -39,10 +39,12 @@ BTreeNode *b_tree_node_create();
 
 ssize_t get_index_for_value(int array[DEGREE], int value);
 
-void insert_into_array(BTreeNode *array[DEGREE + 1], size_t array_size, size_t index, BTreeNode *to_insert);
+void insert_into_array(BTreeNode *array[DEGREE + 1], size_t *array_size, size_t index, BTreeNode *to_insert);
 
 void delete_from_array(void *array, size_t *size, const void *value, const data_type type);
 
 int array_contains(const void *array, const size_t size, const void *value, const data_type type);
+
+void array_int_add_sorted(int *array, size_t *array_size, const int to_insert);
 
 #endif //DATA_STRUCTURES_4_1_HELPER_H

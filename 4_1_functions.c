@@ -3,6 +3,7 @@
 #include <memory.h>
 #include <stdio.h>
 #include <math.h>
+#include <stdbool.h>
 
 // this will ALWAYS return a node since there is always a node where a value is expected to be
 BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
@@ -57,9 +58,8 @@ BTreeNode *b_tree_find_key(BTree *tree, int value) {
 
 void b_tree_link_child(BTreeNode *parent, BTreeNode *child, size_t index) {
     child->parent = parent;
-    insert_into_array(parent->children, parent->children_count, index, child);
+    insert_into_array(parent->children, &parent->children_count, index, child);
     parent->type_of_node = NODE;
-    parent->children_count++;
 }
 
 void b_tree_overwrite_child(BTreeNode *parent, BTreeNode *child, size_t index) {
@@ -225,16 +225,19 @@ void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
 
         size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
         BTreeNode *sibling = NULL;
+        BTreeNode *parent = node->parent;
+        int right = false;
 
-        if (index_in_parent < node->parent->keys_count) {
+        if (index_in_parent < parent->keys_count) {
             // have right
-            BTreeNode *right_sibling = node->parent->children[index_in_parent + 1];
+            BTreeNode *right_sibling = parent->children[index_in_parent + 1];
             if (right_sibling->keys_count > ceil(DEGREE / 2)) {
                 sibling = right_sibling;
             }
+            right = true;
         } else if (index_in_parent > 0) {
             // have left
-            BTreeNode *left_sibling = node->parent->children[index_in_parent - 1];
+            BTreeNode *left_sibling = parent->children[index_in_parent - 1];
             if (left_sibling->keys_count > ceil(DEGREE / 2)) {
                 sibling = left_sibling;
             }
@@ -242,11 +245,30 @@ void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
 
         // if siblings can compensate
         if (sibling != NULL) {
-            printf("One sibling can compensate!\n");
-            // we first need to make this node bigger!
-            // Search among the siblings for a dispensable outer key A.
-            // replace the outermost key B in parent with A and move B into this node
-            // then delete the key
+            int to_insert;
+            // if left, then the value to insert will be the rightmost
+            // else it will be the leftmost
+            if (right) {
+                to_insert = sibling->keys[0];
+            } else {
+                to_insert = sibling->keys[sibling->keys_count - 1];
+            }
+            printf("One sibling can compensate with %d!\n", to_insert);
+
+            // pass that value to parent
+            delete_from_array(sibling->keys, &sibling->keys_count, &to_insert, int_type);
+            b_tree_insert(parent, to_insert, tree);
+
+            // if right, move the leftmost value of parent into node
+            if (right) {
+                b_tree_insert(node, parent->keys[0], tree);
+                delete_from_array(parent->keys, &parent->keys_count, &parent->keys[0], int_type);
+            } else {
+                // if left, move the rightmost value of parent into node
+                b_tree_insert(node, parent->keys[parent->keys_count - 1], tree);
+                delete_from_array(parent->keys, &parent->keys_count, &parent->keys[parent->keys_count - 1], int_type);
+            }
+
         } else {
             // else
             // move the extreme key from parent down
