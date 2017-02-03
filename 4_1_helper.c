@@ -184,3 +184,32 @@ void insert_into_array(BTreeNode *array[DEGREE + 1], size_t array_size, size_t i
     linked_list_as_array(list, array);
     linked_list_destroy(list);
 }
+
+// assumes that all values are unique in the array
+void delete_from_array(void *array, const size_t size, const void *value, const data_type type) {
+
+    if (type == int_type) {
+        int *cast_array = (int *) array;
+        int cast_value = *((int*) value);
+        int replace = false;
+        for (size_t i = 0; i < size; ++i) {
+            if (cast_array[i] == cast_value) {
+                replace = true;
+            }
+
+            if (replace) {
+                cast_array[i] = cast_array[i + 1];
+            }
+        }
+    }
+}
+
+int compare(const void *first, const void *second, const data_type type) {
+    if (type == int_type) {
+        int a = *(int*) first;
+        int b = *(int*) second;
+        return a < b ? -1 : a > b;
+    }
+
+    return -2;
+}
