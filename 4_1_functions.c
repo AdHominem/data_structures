@@ -22,17 +22,44 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
     }
 }
 
+// returns NULL in case there is no such key
+BTreeNode *b_tree_find_key_internal(BTreeNode *node, int value) {
+
+    if (array_contains(node->keys, node->keys_count, &value, int_type)) {
+        return node;
+    } else {
+        // if we are at a leaf, return. we can not go down further!
+        if (node->type_of_node == LEAF) {
+            return NULL;
+        } else {
+            //search in left subtrees
+            for (size_t i = 0; i < node->keys_count; ++i) {
+                if (node->keys[i] > value) {
+                    return b_tree_find_key_internal(node->children[i], value);
+                }
+            }
+            // if the value is too big, try searching it in the right child node
+            return b_tree_find_key_internal(node->children[node->keys_count], value);
+        }
+    }
+}
+
 // Checks if a given value is in the tree and returns a pointer to the Node which is expected to contain it
+// note that this will assume you want to insert a new value. if you want to find a node with a specific key, use find
 BTreeNode *b_tree_search(BTree *tree, int value) {
     return b_tree_search_internal(tree->root, value);
 }
 
-// does all the linking for two nodes and also updates the LEAF / NODE status
-// note that this will not change the children count since you can just overwrite a child reference
+// returns a node containing a defined key
+BTreeNode *b_tree_find_key(BTree *tree, int value) {
+    return b_tree_find_key_internal(tree->root, value);
+}
+
 void b_tree_link_child(BTreeNode *parent, BTreeNode *child, size_t index) {
     child->parent = parent;
     insert_into_array(parent->children, parent->children_count, index, child);
     parent->type_of_node = NODE;
+    parent->children_count++;
 }
 
 void b_tree_overwrite_child(BTreeNode *parent, BTreeNode *child, size_t index) {
@@ -58,14 +85,17 @@ ssize_t get_index_for_node(BTreeNode **node_array, size_t size, BTreeNode *node)
 void b_tree_node_keys_print(BTreeNode *node) {
     printf("[");
     for (size_t j = 0; j < DEGREE - 1; ++j) {
+
+        // always print the key or a blank space
         if (j < node->keys_count) {
             printf("%d", node->keys[j]);
         } else {
             printf(" ");
         }
 
-        if (j != node->keys_count - 1) {
-            printf(", ");
+        // print a comma except during the last iteration
+        if (j != DEGREE - 2) {
+            printf(",");
         }
     }
     printf("]\n");
@@ -120,13 +150,11 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
             // left half of children go to first child
             for (size_t i = 0; i < (DEGREE + 1) / 2; ++i) {
                 b_tree_link_child(first_child, node->children[i], i);
-                first_child->children_count++;
             }
 
             // right half of children go to second child
             for (size_t i = (DEGREE + 1) / 2, j = 0; i < DEGREE + 1; ++i, ++j) {
                 b_tree_link_child(second_child, node->children[i], j);
-                second_child->children_count++;
             }
         }
 
@@ -138,10 +166,7 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
 
             // Linking
             b_tree_link_child(node, first_child, 0);
-            node->children_count++;
             b_tree_link_child(node, second_child, 1);
-            node->children_count++;
-            node->type_of_node = NODE;
 
             tree->root = node;
         } else {
@@ -154,7 +179,6 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
             // Linking
             b_tree_overwrite_child(node->parent, first_child, (size_t) insertion_index);
             b_tree_link_child(node->parent, second_child, (size_t) insertion_index + 1);
-            node->parent->children_count += 1;
 
             b_tree_insert(node->parent, middle, tree);
             free(node);
@@ -162,28 +186,58 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
     }
 }
 
+BTreeNode *b_tree_find_next_largest_value(BTreeNode *node, int value) {
+
+    // go right subtree of this key (every key has one, index will be key index + 1)
+    BTreeNode *current = node->children[get_index_for_value(node->keys, value) + 1];
+
+    // then go very left as long as there are nodes and return
+    while (current->type_of_node != LEAF) {
+        current = current->children[0];
+    }
+
+    return current;
+}
+
 void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
 
     if (node->type_of_node == LEAF) {
-        // Case 1: Leaf contains more than the minimum number of keys (ceil(DEGREE / 2) - 1)
-        if (node->keys_count >= ceil(DEGREE / 2)) {
-            printf("Easy deletion");
-        } else {
-            // if siblings can compensate
-                // we first need to make this node bigger!
-                // Search among the siblings for a dispensable outer key A.
-                // replace the outermost key B in parent with A and move B into this node
-                // then delete the key
-            // else
-                // move the extreme key from parent down
-        }
+        // LEAF
+        delete_from_array(node->keys, &node->keys_count, &value, int_type);
+    } else {
+        // NODE
+        // Internal node contains the value
+        // replace value with the next largest value
+        BTreeNode *node_with_next_largest_value = b_tree_find_next_largest_value(node, value);
+        ssize_t index_to_replace = get_index_for_value(node->keys, value);
+        int next_largest_value = node_with_next_largest_value->keys[0];
+        node->keys[index_to_replace] = next_largest_value;
+        // delete value
+        delete_from_array(node_with_next_largest_value->keys, &node_with_next_largest_value->keys_count,
+                          &next_largest_value, int_type);
     }
+
+    // Overflow (less than ceil(DEGREE / 2) - 1)
+//    if (node->keys_count >= ceil(DEGREE / 2)) {
+//        printf("Easy deletion\n");
+//        // delete value
+//    } else {
+//        // Case 2: Leaf contains not enough keys so we have to somehow adjust it
+//        printf("Adjustment necessary!\n");
+//        // if siblings can compensate
+//        // we first need to make this node bigger!
+//        // Search among the siblings for a dispensable outer key A.
+//        // replace the outermost key B in parent with A and move B into this node
+//        // then delete the key
+//        // else
+//        // move the extreme key from parent down
+//    }
 }
 
 void b_tree_remove(BTree *tree, int value) {
     if (tree->root) {
         // get the fitting node
-        BTreeNode *node = b_tree_search(tree, value);
+        BTreeNode *node = b_tree_find_key(tree, value);
 
         // remove if the value is inside
         if (value_in_array(node->keys, node->keys_count, value)) {
@@ -209,7 +263,6 @@ void b_tree_add(BTree *tree, int value) {
         tree->root->keys[0] = value;
         tree->root->keys_count++;
     }
-
 }
 
 /// Prints all the nodes recursively, indenting them for better readability
@@ -251,7 +304,7 @@ int parse_config(BTree *tree) {
         int input;
         if (*line == '-' && !string_to_integer(line + 1, &input)) {
             printf("Removing %d\n", input);
-            //b_tree_remove(tree, input);
+            b_tree_remove(tree, input);
         } else if (!string_to_integer(line, &input)) {
             printf("Adding %d\n", input);
             b_tree_add(tree, input);
