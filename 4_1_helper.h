@@ -43,4 +43,6 @@ void insert_into_array(BTreeNode *array[DEGREE + 1], size_t array_size, size_t i
 
 void delete_from_array(void *array, size_t *size, const void *value, const data_type type);
 
+int array_contains(const void *array, const size_t size, const void *value, const data_type type);
+
 #endif //DATA_STRUCTURES_4_1_HELPER_H

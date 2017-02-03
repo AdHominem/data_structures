@@ -185,6 +185,19 @@ void insert_into_array(BTreeNode *array[DEGREE + 1], size_t array_size, size_t i
     linked_list_destroy(list);
 }
 
+int array_contains(const void *array, const size_t size, const void *value, const data_type type) {
+    if (type == int_type) {
+        int *cast_array = (int *) array;
+        int cast_value = *((int*) value);
+        for (size_t i = 0; i < size; ++i) {
+            if (cast_array[i] == cast_value) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 // assumes that all values are unique in the array
 // note that this updates the size
 void delete_from_array(void *array, size_t *size, const void *value, const data_type type) {
