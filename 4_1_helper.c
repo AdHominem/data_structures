@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <limits.h>
+#include <memory.h>
+#include <assert.h>
 
 LinkedListNode *linked_list_node_create(BTreeNode *value) {
     LinkedListNode *result = malloc(sizeof(LinkedListNode));
@@ -175,14 +177,25 @@ ssize_t get_index_for_value(int array[DEGREE], int value) {
     return -1;
 }
 
-void insert_into_array(BTreeNode *array[DEGREE + 1], size_t array_size, size_t index, BTreeNode *to_insert) {
+// note that this updates the size
+void insert_into_array(BTreeNode *array[DEGREE + 1], size_t *array_size, size_t index, BTreeNode *to_insert) {
     LinkedList *list = linked_list_create();
-    for (size_t i = 0; i < array_size; ++i) {
+    for (size_t i = 0; i < *array_size; ++i) {
         linked_list_add(list, array[i]);
     }
     linked_list_insert(list, to_insert, index);
     linked_list_as_array(list, array);
+    ++*array_size;
     linked_list_destroy(list);
+}
+
+// note that this updates the size
+// ATTENTION: This assumes the array can actually fit an additional value
+void array_int_add_sorted(int *array, size_t *array_size, const int to_insert) {
+    assert(*array_size < DEGREE - 1);
+    array[*array_size] = to_insert;
+    ++*array_size;
+    qsort(array, *array_size, sizeof(int), compare_ints);
 }
 
 int array_contains(const void *array, const size_t size, const void *value, const data_type type) {
