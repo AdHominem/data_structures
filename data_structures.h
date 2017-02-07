@@ -800,13 +800,10 @@ int delete_binary_tree_node(BinaryTree *tree, int value) {
  * ADJACENCY LIST
  *
  * This specific data structure creates adjacency lists of fixed size
- * TODO: Make it accept an arbitrary size
  */
 
 
 // DATA STRUCTURES
-
-#define NODES_COUNT 20
 
 typedef struct alnode AdjacencyListNode;
 
@@ -817,7 +814,8 @@ struct alnode {
 };
 
 typedef struct alist {
-    AdjacencyListNode *nodes[NODES_COUNT];
+    AdjacencyListNode **nodes;
+    size_t size;
 } AdjacencyList;
 
 // CONSTRUCTORS AND DESTRUCTORS
@@ -836,7 +834,7 @@ AdjacencyListNode *destroy_alnode(AdjacencyListNode *node) {
 /// Creates a new node for an adjacency list
 /// \param value The node's integer value
 /// \return A pointer to the node or NULL if memory allocation failed
-AdjacencyListNode *create_alnode(int value) {
+AdjacencyListNode *adjacency_list_node_create(int value) {
 
     AdjacencyListNode *result = malloc(sizeof(AdjacencyListNode));
     if (result == NULL) {
@@ -856,11 +854,12 @@ AdjacencyListNode *create_alnode(int value) {
 /// Destroys an adjacency list
 /// \param list The list to destroy
 /// \return NULL
-AdjacencyList *destroy_alist(AdjacencyList *list) {
+AdjacencyList *adjacency_list_destroy(AdjacencyList *list) {
     if (list) {
-        for (int i = 0; i < NODES_COUNT; ++i) {
+        for (size_t i = 0; i < list->size; ++i) {
             list->nodes[i] = destroy_alnode(list->nodes[i]);
         }
+        free(list->nodes);
     }
     free(list);
     return NULL;
@@ -868,16 +867,24 @@ AdjacencyList *destroy_alist(AdjacencyList *list) {
 
 /// Creates a new adjacency list pre initialized with nodes of value 0-19
 /// \return A pointer to the list or NULL if memory allocation failed
-AdjacencyList *create_alist() {
+AdjacencyList *adjacency_list_create(size_t size) {
+
     AdjacencyList *result = malloc(sizeof(AdjacencyList));
     if (result == NULL) {
         return NULL;
     }
 
-    for (int i = 0; i < NODES_COUNT; ++i) {
-        result->nodes[i] = create_alnode(i);
+    result->size = size;
+
+    result->nodes = malloc(sizeof(AdjacencyListNode*) * size);
+    if (result->nodes == NULL) {
+        return adjacency_list_destroy(result);
+    }
+
+    for (size_t i = 0; i < size; ++i) {
+        result->nodes[i] = adjacency_list_node_create(i);
         if (result->nodes[i] == NULL) {
-            return destroy_alist(result);
+            return adjacency_list_destroy(result);
         }
     }
 
@@ -895,10 +902,20 @@ void link_alnodes(AdjacencyListNode *from, AdjacencyListNode *to) {
     }
 }
 
+size_t indeg(AdjacencyListNode *node, AdjacencyList *graph) {
+    size_t result = 0;
+    for (size_t i = 0; i < graph->size; ++i) {
+        if (linked_list_contains(graph->nodes[i]->successors, node->value)) {
+            ++result;
+        }
+    }
+    return result;
+}
+
 void print_alist(AdjacencyList *list) {
 
-    for (int i = 0; i < NODES_COUNT; ++i) {
-        printf("%d: ", i);
+    for (size_t i = 0; i < list->size; ++i) {
+        printf("%zu: ", i);
         linked_list_print(list->nodes[i]->successors);
     }
     printf("\n");
