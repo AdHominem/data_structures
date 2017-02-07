@@ -58,12 +58,14 @@ LinkedList *linked_list_destroy(LinkedList *list) {
 }
 
 size_t linked_list_get_length(LinkedList *list) {
-    LinkedListNode *head = list->head;
     size_t result = 0;
+    if (list) {
+        LinkedListNode *head = list->head;
 
-    while (head != NULL) {
-        head = head->next;
-        ++result;
+        while (head != NULL) {
+            head = head->next;
+            ++result;
+        }
     }
 
     return result;
@@ -147,7 +149,11 @@ void linked_list_as_array(LinkedList *list, int *array) {
 }
 
 void linked_list_add(LinkedList *list, int value) {
-    linked_list_insert(list, value, linked_list_get_length(list));
+    if (list->head) {
+        linked_list_insert(list, value, linked_list_get_length(list));
+    } else {
+        list->head = linked_list_node_create(value);
+    }
 }
 
 void linked_list_print(LinkedList *list) {
@@ -164,12 +170,14 @@ void linked_list_print(LinkedList *list) {
 }
 
 int linked_list_contains(LinkedList *list, int value) {
-    LinkedListNode *current = list->head;
-    while (current) {
-        if (current->value == value) {
-            return 1;
+    if (list) {
+        LinkedListNode *current = list->head;
+        while (current) {
+            if (current->value == value) {
+                return 1;
+            }
+            current = current->next;
         }
-        current = current->next;
     }
     return 0;
 }
@@ -203,7 +211,7 @@ AdjacencyListNode *adjacency_list_node_create(int value) {
     }
 
     result->value = value;
-    result->successors = NULL;
+    result->successors = linked_list_create();
     result->next = NULL;
 
     return result;
@@ -328,14 +336,18 @@ int adjacency_list_insert(AdjacencyList *list, int value, size_t index) {
 //}
 
 void adjacency_list_add(AdjacencyList *list, int value) {
-    adjacency_list_insert(list, value, adjacency_list_get_length(list));
+    if (list->head) {
+        adjacency_list_insert(list, value, adjacency_list_get_length(list));
+    } else {
+        list->head = adjacency_list_node_create(value);
+    }
 }
 
-//void adjacency_list_link_nodes(AdjacencyListNode *from, AdjacencyListNode *to) {
-//    if (from && to && !linked_list_contains(from->successors, to->value)) {
-//        add_to_linked_list(from->successors, to->value);
-//    }
-//}
+void adjacency_list_link_nodes(AdjacencyListNode *from, AdjacencyListNode *to) {
+    if (from && to && !linked_list_contains(from->successors, to->value)) {
+        linked_list_add(from->successors, to->value);
+    }
+}
 
 void adjacency_list_remove(AdjacencyList *list, int value) {
     AdjacencyListNode *current = list->head;
@@ -350,8 +362,10 @@ void adjacency_list_remove(AdjacencyList *list, int value) {
                 last->next = current->next;
             }
             free(current);
-            return;
+        } else {
+            linked_list_remove(current->successors, value);
         }
+
         last = current;
         current = current->next;
     }
@@ -383,20 +397,23 @@ void adjacency_list_print(AdjacencyList *list) {
 /// \param list The adjacency list
 /// \param matrix The matrix
 //TODO The amount of edges is supposed to be variable
-//void link_random(AdjacencyList *list) {
-//    srand((unsigned int) time(NULL));
-//    int matrix[list->size][list->size];
-//
-//    // For any given node, there is a small chance it links to a different target node
-//    for (size_t from = 0; from < list->size; ++from) {
-//        for (size_t to = 0; to < list->size; ++to) {
-//            if (from != to && !(rand() % 7)) {
-//                adjacency_list_link_nodes(list->nodes[from], list->nodes[to]);
-//                matrix[from][to] = 1;
-//            }
-//        }
-//    }
-//}
+void link_random(AdjacencyList *list) {
+    srand((unsigned int) time(NULL));
+
+    // For any given node, there is a small chance it links to a different target node
+    AdjacencyListNode *from = list->head;
+    AdjacencyListNode *to = list->head;
+    while (from) {
+        while (to) {
+            if (from != to && !(rand() % 7)) {
+                adjacency_list_link_nodes(from, to);
+            }
+            to = to->next;
+        }
+        to = list->head;
+        from = from->next;
+    }
+}
 
 int main() {
     AdjacencyList *list = adjacency_list_create();
@@ -404,6 +421,10 @@ int main() {
     adjacency_list_add(list, 1);
     adjacency_list_add(list, 2);
     adjacency_list_add(list, 3);
+    link_random(list);
+    adjacency_list_print(list);
+
+    adjacency_list_remove(list, 3);
     adjacency_list_print(list);
 
     adjacency_list_destroy(list);
