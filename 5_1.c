@@ -371,24 +371,27 @@ void adjacency_list_remove(AdjacencyList *list, int value) {
     }
 }
 
-//size_t indeg(AdjacencyListNode *node, AdjacencyList *graph) {
-//    size_t result = 0;
-//    for (size_t i = 0; i < graph->size; ++i) {
-//        if (linked_list_contains(graph->nodes[i]->successors, node->value)) {
-//            ++result;
-//        }
-//    }
-//    return result;
-//}
+size_t indeg(const int value, const AdjacencyList *graph) {
+    size_t result = 0;
+
+    AdjacencyListNode *current = graph->head;
+    while (current) {
+        if (linked_list_contains(current->successors, value)) {
+            ++result;
+        }
+        current = current->next;
+    }
+
+    return result;
+}
 
 void adjacency_list_print(AdjacencyList *list) {
 
     AdjacencyListNode *current = list->head;
     while (current) {
-        printf("%d: ", current->value);
+        printf("%d\t(%zu):\t", current->value, indeg(current->value, list));
         linked_list_print(current->successors);
         current = current->next;
-        printf("\n");
     }
 }
 
@@ -419,13 +422,15 @@ int main() {
     AdjacencyList *list = adjacency_list_create();
 
     adjacency_list_add(list, 1);
-    adjacency_list_add(list, 2);
-    adjacency_list_add(list, 3);
+    adjacency_list_add(list, 24);
+    adjacency_list_add(list, 32);
+    adjacency_list_add(list, 31);
+    adjacency_list_add(list, 40);
+    adjacency_list_add(list, 92);
+    adjacency_list_add(list, 78);
     link_random(list);
     adjacency_list_print(list);
 
-    adjacency_list_remove(list, 3);
-    adjacency_list_print(list);
 
     adjacency_list_destroy(list);
 }
