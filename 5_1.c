@@ -293,50 +293,6 @@ AdjacencyListNode *adjacency_list_insert(AdjacencyList *list, int value, size_t 
     return to_insert;
 }
 
-//int adjacency_list_add_sorted(AdjacencyList *list, int value) {
-//
-//    LinkedListNode *to_insert = adjacency_list_node_create(value);
-//    if (to_insert == NULL) {
-//        return 1;
-//    }
-//
-//    LinkedListNode *current_node = list->head;
-//
-//    // Catch empty list and append to front case
-//    if (current_node == NULL || current_node->value > value) {
-//        to_insert->next = current_node;
-//        list->head = to_insert;
-//    } else {
-//        LinkedListNode *precursor = NULL;
-//
-//        for (size_t i = 0; i < adjacency_list_get_length(list); ++i) {
-//
-//            precursor = current_node;
-//            current_node = current_node->next;
-//
-//            // current node is NULL? Then we are at the end and the value to insert is the largest in the list
-//            // or is the current value larger than our value? then we can insert too
-//            if (current_node == NULL || current_node->value > value) {
-//                to_insert->next = current_node;
-//                precursor->next = to_insert;
-//                break;
-//            }
-//            // if not, move further in the list
-//        }
-//    }
-//    return 0;
-//}
-//
-//void adjacency_list_as_array(AdjacencyList *list, int *array) {
-//
-//    LinkedListNode *node = list->head;
-//
-//    for (size_t i = 0; i < adjacency_list_get_length(list); ++i) {
-//        array[i] = node->value;
-//        node = node->next;
-//    }
-//}
-
 int adjacency_list_contains_value(AdjacencyList *list, int value) {
     if (list) {
         AdjacencyListNode *current = list->head;
@@ -423,7 +379,6 @@ int adjacency_list_contains(AdjacencyList *list, AdjacencyListNode *node) {
     return 0;
 }
 
-
 AdjacencyList *adjacency_list_copy(const AdjacencyList *source) {
     AdjacencyList *destination = adjacency_list_create();
 
@@ -440,7 +395,6 @@ AdjacencyList *adjacency_list_copy(const AdjacencyList *source) {
     }
     return destination;
 }
-
 
 size_t indeg(const int value, const AdjacencyList *graph) {
     size_t result = 0;
