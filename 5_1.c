@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <memory.h>
+#include <stdbool.h>
 
 
 typedef struct linked_list_node LinkedListNode;
@@ -336,8 +337,21 @@ AdjacencyListNode *adjacency_list_insert(AdjacencyList *list, int value, size_t 
 //    }
 //}
 
+int adjacency_list_contains_value(AdjacencyList *list, int value) {
+    if (list) {
+        AdjacencyListNode *current = list->head;
+        while (current) {
+            if (current->value == value) {
+                return true;
+            }
+            current = current->next;
+        }
+    }
+    return false;
+}
+
 AdjacencyListNode *adjacency_list_add(AdjacencyList *list, int value) {
-    if (list->head) {
+    if (list->head && !adjacency_list_contains_value(list, value)) {
         return adjacency_list_insert(list, value, adjacency_list_get_length(list));
     } else {
         AdjacencyListNode *to_insert = adjacency_list_node_create(value);
@@ -347,6 +361,28 @@ AdjacencyListNode *adjacency_list_add(AdjacencyList *list, int value) {
 }
 
 void adjacency_list_link_nodes(AdjacencyListNode *from, AdjacencyListNode *to) {
+    if (from && to && !linked_list_contains(from->successors, to->value)) {
+        linked_list_add(from->successors, to->value);
+    }
+}
+
+AdjacencyListNode *adjacency_list_search(AdjacencyList *list, int value) {
+    if (list) {
+        AdjacencyListNode *current = list->head;
+        while (current) {
+            if (current->value == value) {
+                return current;
+            }
+            current = current->next;
+        }
+    }
+    return NULL;
+}
+
+void adjacency_list_link_nodes_by_value(AdjacencyList *list, int from_value, int to_value) {
+    AdjacencyListNode *from = adjacency_list_search(list, from_value);
+    AdjacencyListNode *to = adjacency_list_search(list, to_value);
+
     if (from && to && !linked_list_contains(from->successors, to->value)) {
         linked_list_add(from->successors, to->value);
     }
@@ -387,25 +423,21 @@ int adjacency_list_contains(AdjacencyList *list, AdjacencyListNode *node) {
     return 0;
 }
 
+
 AdjacencyList *adjacency_list_copy(const AdjacencyList *source) {
     AdjacencyList *destination = adjacency_list_create();
 
-    // loop over all nodes
     AdjacencyListNode *current = source->head;
     while (current) {
         AdjacencyListNode *copied_node = adjacency_list_add(destination, current->value);
-
-        // loop over all successors
         LinkedListNode *current_successor = current->successors->head;
         while (current_successor) {
 
             linked_list_add(copied_node->successors, current_successor->value);
             current_successor = current_successor->next;
         }
-
         current = current->next;
     }
-
     return destination;
 }
 
@@ -428,7 +460,7 @@ void adjacency_list_print(AdjacencyList *list) {
 
     AdjacencyListNode *current = list->head;
     while (current) {
-        printf("%d\t(%zu):\t", current->value, indeg(current->value, list));
+        printf("%d\t(%zu):\t", current->value, current->order);
         linked_list_print(current->successors);
         current = current->next;
     }
@@ -439,7 +471,7 @@ void adjacency_list_print(AdjacencyList *list) {
 /// \param list The adjacency list
 /// \param matrix The matrix
 //TODO The amount of edges is supposed to be variable
-void link_random(AdjacencyList *list) {
+void link_random(AdjacencyList *list, int chance_not_to_link) {
     srand((unsigned int) time(NULL));
 
     // For any given node, there is a small chance it links to a different target node
@@ -447,7 +479,7 @@ void link_random(AdjacencyList *list) {
     AdjacencyListNode *to = list->head;
     while (from) {
         while (to) {
-            if (from != to){// && !(rand() % 7)) {
+            if (from != to && !(rand() % chance_not_to_link)) {
                 adjacency_list_link_nodes(from, to);
             }
             to = to->next;
@@ -457,29 +489,51 @@ void link_random(AdjacencyList *list) {
     }
 }
 
-void topological_sort(AdjacencyList *graph) {
-    AdjacencyList *checked = adjacency_list_create();
+int topological_sort(AdjacencyList *graph) {
+    AdjacencyList *copy = adjacency_list_copy(graph);
+    size_t order = 1;
 
-    AdjacencyListNode *current = graph->head;
-    while (current) {
-
-        current = current->next;
+    // graph is cyclic if one full loop does not lead to a change
+    size_t changed = true;
+    while (copy->head && changed) {
+        changed = false;
+        AdjacencyListNode *current = copy->head;
+        while (current) {
+            // if indegree == 0, then assign a fresh number and remove
+            if (indeg(current->value, copy) == 0) {
+                adjacency_list_search(graph, current->value)->order = order++;
+                adjacency_list_remove(copy, current->value);
+                changed = true;
+            }
+            current = current->next;
+        }
     }
 
-    adjacency_list_destroy(checked);
+    adjacency_list_destroy(copy);
+
+    return changed ? 0 : 1;
+}
+
+void add_random(AdjacencyList *list, int limit) {
+    srand((unsigned int) time(NULL));
+
+    int random = rand() % limit;
+    int nodes = random < 3 ? 3 : random;
+    for (int i = 0; i < nodes; ++i) {
+        adjacency_list_add(list, i);
+    }
 }
 
 int main() {
     AdjacencyList *list = adjacency_list_create();
 
-    adjacency_list_add(list, 1);
-    adjacency_list_add(list, 2);
-    adjacency_list_add(list, 3);
-    link_random(list);
-    AdjacencyList *copy = adjacency_list_copy(list);
+    add_random(list, 15);
+    link_random(list, 10);
+    int status = topological_sort(list);
 
+    printf("This graph is");
+    printf(status ? " cyclic\n" : " acyclic\n");
     adjacency_list_print(list);
 
-    adjacency_list_destroy(copy);
     adjacency_list_destroy(list);
 }
