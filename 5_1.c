@@ -1,7 +1,7 @@
 #include <time.h>
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <memory.h>
 
 
 typedef struct linked_list_node LinkedListNode;
@@ -18,6 +18,7 @@ struct linked_list_node {
 };
 struct adjacency_list_node {
     int value;
+    size_t order;
     LinkedList *successors;
     AdjacencyListNode *next;
 };
@@ -258,18 +259,18 @@ size_t adjacency_list_get_length(AdjacencyList *list) {
     return result;
 }
 
-int adjacency_list_insert(AdjacencyList *list, int value, size_t index) {
+AdjacencyListNode *adjacency_list_insert(AdjacencyList *list, int value, size_t index) {
 
     // Catch index out of range
     if (index > adjacency_list_get_length(list)) {
         perror("List index out of range!");
-        return 2;
+        return NULL;
     }
 
     AdjacencyListNode *head = list->head;
     AdjacencyListNode *to_insert = adjacency_list_node_create(value);
     if (to_insert == NULL) {
-        return 1;
+        return NULL;
     }
 
     // Catch append to front case
@@ -288,7 +289,7 @@ int adjacency_list_insert(AdjacencyList *list, int value, size_t index) {
         before->next = to_insert;
         to_insert->next = head;
     }
-    return 0;
+    return to_insert;
 }
 
 //int adjacency_list_add_sorted(AdjacencyList *list, int value) {
@@ -335,11 +336,13 @@ int adjacency_list_insert(AdjacencyList *list, int value, size_t index) {
 //    }
 //}
 
-void adjacency_list_add(AdjacencyList *list, int value) {
+AdjacencyListNode *adjacency_list_add(AdjacencyList *list, int value) {
     if (list->head) {
-        adjacency_list_insert(list, value, adjacency_list_get_length(list));
+        return adjacency_list_insert(list, value, adjacency_list_get_length(list));
     } else {
-        list->head = adjacency_list_node_create(value);
+        AdjacencyListNode *to_insert = adjacency_list_node_create(value);
+        list->head = to_insert;
+        return to_insert;
     }
 }
 
@@ -370,6 +373,42 @@ void adjacency_list_remove(AdjacencyList *list, int value) {
         current = current->next;
     }
 }
+
+int adjacency_list_contains(AdjacencyList *list, AdjacencyListNode *node) {
+    if (list) {
+        AdjacencyListNode *current = list->head;
+        while (current) {
+            if (current == node) {
+                return 1;
+            }
+            current = current->next;
+        }
+    }
+    return 0;
+}
+
+AdjacencyList *adjacency_list_copy(const AdjacencyList *source) {
+    AdjacencyList *destination = adjacency_list_create();
+
+    // loop over all nodes
+    AdjacencyListNode *current = source->head;
+    while (current) {
+        AdjacencyListNode *copied_node = adjacency_list_add(destination, current->value);
+
+        // loop over all successors
+        LinkedListNode *current_successor = current->successors->head;
+        while (current_successor) {
+
+            linked_list_add(copied_node->successors, current_successor->value);
+            current_successor = current_successor->next;
+        }
+
+        current = current->next;
+    }
+
+    return destination;
+}
+
 
 size_t indeg(const int value, const AdjacencyList *graph) {
     size_t result = 0;
@@ -408,7 +447,7 @@ void link_random(AdjacencyList *list) {
     AdjacencyListNode *to = list->head;
     while (from) {
         while (to) {
-            if (from != to && !(rand() % 7)) {
+            if (from != to){// && !(rand() % 7)) {
                 adjacency_list_link_nodes(from, to);
             }
             to = to->next;
@@ -418,19 +457,29 @@ void link_random(AdjacencyList *list) {
     }
 }
 
+void topological_sort(AdjacencyList *graph) {
+    AdjacencyList *checked = adjacency_list_create();
+
+    AdjacencyListNode *current = graph->head;
+    while (current) {
+
+        current = current->next;
+    }
+
+    adjacency_list_destroy(checked);
+}
+
 int main() {
     AdjacencyList *list = adjacency_list_create();
 
     adjacency_list_add(list, 1);
-    adjacency_list_add(list, 24);
-    adjacency_list_add(list, 32);
-    adjacency_list_add(list, 31);
-    adjacency_list_add(list, 40);
-    adjacency_list_add(list, 92);
-    adjacency_list_add(list, 78);
+    adjacency_list_add(list, 2);
+    adjacency_list_add(list, 3);
     link_random(list);
+    AdjacencyList *copy = adjacency_list_copy(list);
+
     adjacency_list_print(list);
 
-
+    adjacency_list_destroy(copy);
     adjacency_list_destroy(list);
 }
