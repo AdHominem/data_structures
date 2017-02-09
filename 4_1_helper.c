@@ -214,11 +214,25 @@ int array_contains(const void *array, const size_t size, const void *value, cons
 // assumes that all values are unique in the array
 // note that this updates the size
 // this simulates a dynamic data structure
-void delete_from_array(void *array, size_t *size, const void *value, const data_type type) {
+void array_delete(void *array, size_t *size, const void *value, const data_type type) {
 
     if (type == int_type) {
         int *cast_array = (int *) array;
         int cast_value = *((int*) value);
+        int replace = false;
+        for (size_t i = 0; i < *size; ++i) {
+            if (cast_array[i] == cast_value) {
+                replace = true;
+                --*size;
+            }
+
+            if (replace) {
+                cast_array[i] = cast_array[i + 1];
+            }
+        }
+    } else if (type == node_pointer_type) {
+        BTreeNode **cast_array = (BTreeNode **) array;
+        BTreeNode *cast_value = (BTreeNode*) value;
         int replace = false;
         for (size_t i = 0; i < *size; ++i) {
             if (cast_array[i] == cast_value) {
