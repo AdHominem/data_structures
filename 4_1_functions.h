@@ -11,8 +11,7 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, int value);
 BTreeNode *b_tree_search(BTree *tree, int value);
 
 // does all the linking for two nodes and also updates the LEAF / NODE status
-// note that this will not change the children count since you can just overwrite a child reference
-void b_tree_link_child(BTreeNode *parent, BTreeNode *child, size_t index);
+void b_tree_link_child_insert(BTreeNode *parent, BTreeNode *child, size_t index);
 
 void b_tree_overwrite_child(BTreeNode *parent, BTreeNode *child, size_t index);
 

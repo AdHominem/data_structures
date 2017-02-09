@@ -178,12 +178,25 @@ ssize_t get_index_for_value(int array[DEGREE], int value) {
 }
 
 // note that this updates the size
-void insert_into_array(BTreeNode *array[DEGREE + 1], size_t *array_size, size_t index, BTreeNode *to_insert) {
+void array_insert(BTreeNode **array, size_t *array_size, size_t index, BTreeNode *to_insert) {
     LinkedList *list = linked_list_create();
     for (size_t i = 0; i < *array_size; ++i) {
         linked_list_add(list, array[i]);
     }
     linked_list_insert(list, to_insert, index);
+    linked_list_as_array(list, array);
+    ++*array_size;
+    linked_list_destroy(list);
+}
+
+// note that this updates the size
+// assumes this fits
+void array_add(BTreeNode *array[DEGREE + 1], size_t *array_size, BTreeNode *to_insert) {
+    LinkedList *list = linked_list_create();
+    for (size_t i = 0; i < *array_size; ++i) {
+        linked_list_add(list, array[i]);
+    }
+    linked_list_add(list, to_insert);
     linked_list_as_array(list, array);
     ++*array_size;
     linked_list_destroy(list);

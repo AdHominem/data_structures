@@ -2,6 +2,7 @@
 #include "4_1_helper.h"
 #include "4_1_functions.h"
 #include <stdio.h>
+#include <assert.h>
 
 void test() {
     BTree *tree = b_tree_create();
@@ -9,7 +10,20 @@ void test() {
     b_tree_add(tree, 1);
     b_tree_add(tree, 2);
     b_tree_add(tree, 3);
-    b_tree_remove(tree, 0);
+    b_tree_add(tree, 4);
+    b_tree_add(tree, 5);
+    b_tree_add(tree, 6);
+    b_tree_add(tree, 7);
+    b_tree_add(tree, 8);
+    b_tree_add(tree, 9);
+    b_tree_add(tree, 10);
+    b_tree_add(tree, 11);
+    b_tree_print(tree);
+    b_tree_remove(tree, 11);
+    //TODO Code breaks here:
+    //b_tree_remove(tree, 3);
+
+
 
     b_tree_print(tree);
 

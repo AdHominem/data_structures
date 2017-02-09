@@ -56,9 +56,15 @@ BTreeNode *b_tree_find_key(BTree *tree, int value) {
     return b_tree_find_key_internal(tree->root, value);
 }
 
-void b_tree_link_child(BTreeNode *parent, BTreeNode *child, size_t index) {
+void b_tree_link_child_insert(BTreeNode *parent, BTreeNode *child, size_t index) {
     child->parent = parent;
-    insert_into_array(parent->children, &parent->children_count, index, child);
+    array_insert(parent->children, &parent->children_count, index, child);
+    parent->type_of_node = NODE;
+}
+
+void b_tree_link_child_add(BTreeNode *parent, BTreeNode *child) {
+    child->parent = parent;
+    array_add(parent->children, &parent->children_count, child);
     parent->type_of_node = NODE;
 }
 
@@ -149,12 +155,12 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
 
             // left half of children go to first child
             for (size_t i = 0; i < (DEGREE + 1) / 2; ++i) {
-                b_tree_link_child(first_child, node->children[i], i);
+                b_tree_link_child_insert(first_child, node->children[i], i);
             }
 
             // right half of children go to second child
             for (size_t i = (DEGREE + 1) / 2, j = 0; i < DEGREE + 1; ++i, ++j) {
-                b_tree_link_child(second_child, node->children[i], j);
+                b_tree_link_child_insert(second_child, node->children[i], j);
             }
         }
 
@@ -165,8 +171,8 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
             node->keys_count++;
 
             // Linking
-            b_tree_link_child(node, first_child, 0);
-            b_tree_link_child(node, second_child, 1);
+            b_tree_link_child_insert(node, first_child, 0);
+            b_tree_link_child_insert(node, second_child, 1);
 
             tree->root = node;
         } else {
@@ -178,7 +184,7 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
 
             // Linking
             b_tree_overwrite_child(node->parent, first_child, (size_t) insertion_index);
-            b_tree_link_child(node->parent, second_child, (size_t) insertion_index + 1);
+            b_tree_link_child_insert(node->parent, second_child, (size_t) insertion_index + 1);
 
             b_tree_insert(node->parent, middle, tree);
             free(node);
@@ -199,11 +205,116 @@ BTreeNode *b_tree_find_next_largest_value(BTreeNode *node, int value) {
     return current;
 }
 
+void handle_underflow(BTreeNode *node, BTree *tree) {
+    // UNDERFLOW DETECTION
+    if (node != tree->root && node->keys_count < ceil(DEGREE / 2)) {
+        // Leaf contains not enough keys so we have to somehow adjust it
+        printf("Underflow detected!\n");
+
+        size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
+        BTreeNode *sibling_who_can_compensate = NULL;
+        BTreeNode *left_sibling = NULL;
+        BTreeNode *right_sibling = NULL;
+        BTreeNode *parent = node->parent;
+        int right = false;
+
+        if (index_in_parent < parent->keys_count) {
+            // have right
+            right_sibling = parent->children[index_in_parent + 1];
+            if (right_sibling->keys_count > ceil(DEGREE / 2)) {
+                sibling_who_can_compensate = right_sibling;
+            }
+            right = true;
+        } else if (index_in_parent > 0) {
+            // have left
+            left_sibling = parent->children[index_in_parent - 1];
+            if (left_sibling->keys_count > ceil(DEGREE / 2)) {
+                sibling_who_can_compensate = left_sibling;
+            }
+        }
+
+        // if siblings can compensate
+        if (sibling_who_can_compensate) {
+            int to_insert;
+            // if left, then the value to insert will be the rightmost
+            // else it will be the leftmost
+            if (right) {
+                to_insert = sibling_who_can_compensate->keys[0];
+            } else {
+                to_insert = sibling_who_can_compensate->keys[sibling_who_can_compensate->keys_count - 1];
+            }
+            printf("One sibling can compensate with %d!\n", to_insert);
+
+            // pass that value to parent
+            array_delete(sibling_who_can_compensate->keys, &sibling_who_can_compensate->keys_count, &to_insert,
+                         int_type);
+            b_tree_insert(parent, to_insert, tree);
+
+            // if right, move the leftmost value of parent into node
+            // if left, move the rightmost value of parent into node
+            size_t index_to_insert = right ? 0 : parent->keys_count - 1;
+            b_tree_insert(node, parent->keys[index_to_insert], tree);
+            array_delete(parent->keys, &parent->keys_count, &parent->keys[index_to_insert], int_type);
+
+        } else {
+            // else
+            // move the extreme key from parent down
+            printf("I have to merge with one sibling!\n");
+            BTreeNode *sibling = right ? right_sibling : left_sibling;
+
+            // insert all keys of node into this sibling
+            for (size_t i = 0; i < node->keys_count; ++i) {
+                array_int_add_sorted(sibling->keys, &sibling->keys_count, node->keys[i]);
+            }
+
+            // add all children of node into this sibling
+            // order matters, so:
+            // if sibling is right, we append all children from right to left into index 0
+            // if sibling is left, we append all children from left to right at the end
+            if (node->type_of_node == NODE) {
+                if (right) {
+                    for (size_t j = node->children_count - 1; j < node->children_count; --j) {
+                        b_tree_link_child_insert(sibling, node->children[j], 0);
+                    }
+                } else {
+                    for (size_t i = 0; i < node->children_count; ++i) {
+                        b_tree_link_child_add(sibling, node->children[i]);
+                    }
+                }
+            }
+
+            // get siblings index
+            size_t index = (size_t) get_index_for_node(parent->children, parent->children_count, sibling);
+
+            // if merge with right, then move the index-1-th key into sibling
+            // else move the index-th key into sibling
+            if (right) --index;
+            b_tree_insert(sibling, parent->keys[index], tree);
+
+            // remove old node (which is empty anyways)
+            array_delete(parent->children, &parent->children_count, node, node_pointer_type);
+
+            // remove the moved key from parent
+            array_delete(parent->keys, &parent->keys_count, &parent->keys[index], int_type);
+
+            // if parent has zero keys now, swap
+//            if (parent->keys_count == 0 && parent->parent == NULL) {
+//                tree->root = sibling;
+//                sibling->parent = NULL;
+//            }
+
+            // finally check if parent underflows now
+            handle_underflow(parent, tree);
+        }
+    }
+}
+
 void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
 
+    // DELETION
     if (node->type_of_node == LEAF) {
         // LEAF
-        delete_from_array(node->keys, &node->keys_count, &value, int_type);
+        array_delete(node->keys, &node->keys_count, &value, int_type);
     } else {
         // NODE
         // Internal node contains the value
@@ -215,69 +326,12 @@ void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
         // delete value
         // note that we do not actually perform the swap here but instead just delete the next largest which would be
         // replaced by the target value anyways
-        delete_from_array(node_with_next_largest_value->keys, &node_with_next_largest_value->keys_count,
-                          &next_largest_value, int_type);
+        array_delete(node_with_next_largest_value->keys, &node_with_next_largest_value->keys_count,
+                     &next_largest_value, int_type);
         node = node_with_next_largest_value;
     }
 
-    // Overflow (less than ceil(DEGREE / 2) - 1) except node is root
-    if (node != tree->root && node->keys_count < ceil(DEGREE / 2)) {
-        // Leaf contains not enough keys so we have to somehow adjust it
-        printf("Underflow detected!\n");
-
-        size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
-        BTreeNode *sibling = NULL;
-        BTreeNode *parent = node->parent;
-        int right = false;
-
-        if (index_in_parent < parent->keys_count) {
-            // have right
-            BTreeNode *right_sibling = parent->children[index_in_parent + 1];
-            if (right_sibling->keys_count > ceil(DEGREE / 2)) {
-                sibling = right_sibling;
-            }
-            right = true;
-        } else if (index_in_parent > 0) {
-            // have left
-            BTreeNode *left_sibling = parent->children[index_in_parent - 1];
-            if (left_sibling->keys_count > ceil(DEGREE / 2)) {
-                sibling = left_sibling;
-            }
-        }
-
-        // if siblings can compensate
-        if (sibling != NULL) {
-            int to_insert;
-            // if left, then the value to insert will be the rightmost
-            // else it will be the leftmost
-            if (right) {
-                to_insert = sibling->keys[0];
-            } else {
-                to_insert = sibling->keys[sibling->keys_count - 1];
-            }
-            printf("One sibling can compensate with %d!\n", to_insert);
-
-            // pass that value to parent
-            delete_from_array(sibling->keys, &sibling->keys_count, &to_insert, int_type);
-            b_tree_insert(parent, to_insert, tree);
-
-            // if right, move the leftmost value of parent into node
-            if (right) {
-                b_tree_insert(node, parent->keys[0], tree);
-                delete_from_array(parent->keys, &parent->keys_count, &parent->keys[0], int_type);
-            } else {
-                // if left, move the rightmost value of parent into node
-                b_tree_insert(node, parent->keys[parent->keys_count - 1], tree);
-                delete_from_array(parent->keys, &parent->keys_count, &parent->keys[parent->keys_count - 1], int_type);
-            }
-
-        } else {
-            // else
-            // move the extreme key from parent down
-            printf("I have to merge with one sibling!\n");
-        }
-
-    }
+    handle_underflow(node, tree);
 }
 
 void b_tree_remove(BTree *tree, int value) {

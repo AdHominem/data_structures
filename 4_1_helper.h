@@ -39,9 +39,9 @@ BTreeNode *b_tree_node_create();
 
 ssize_t get_index_for_value(int array[DEGREE], int value);
 
-void insert_into_array(BTreeNode *array[DEGREE + 1], size_t *array_size, size_t index, BTreeNode *to_insert);
-
-void delete_from_array(void *array, size_t *size, const void *value, const data_type type);
+void array_insert(BTreeNode **array, size_t *array_size, size_t index, BTreeNode *to_insert);
+void array_add(BTreeNode *array[DEGREE + 1], size_t *array_size, BTreeNode *to_insert);
+void array_delete(void *array, size_t *size, const void *value, const data_type type);
 
 int array_contains(const void *array, const size_t size, const void *value, const data_type type);
 
