@@ -18,10 +18,10 @@ void test() {
     b_tree_add(tree, 9);
     b_tree_add(tree, 10);
     b_tree_add(tree, 11);
-    b_tree_print(tree);
     b_tree_remove(tree, 11);
+    b_tree_print(tree);
     //TODO Code breaks here:
-    //b_tree_remove(tree, 3);
+    b_tree_remove(tree, 3);
 
 
 

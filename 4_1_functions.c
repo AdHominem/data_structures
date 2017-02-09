@@ -218,17 +218,18 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
         BTreeNode *parent = node->parent;
         int right = false;
 
+        // It's NOT enough to check if they have enough keys!!! Also the siblings must be leafs
         if (index_in_parent < parent->keys_count) {
             // have right
             right_sibling = parent->children[index_in_parent + 1];
-            if (right_sibling->keys_count > ceil(DEGREE / 2)) {
+            if (right_sibling->type_of_node == LEAF && right_sibling->keys_count > ceil(DEGREE / 2)) {
                 sibling_who_can_compensate = right_sibling;
             }
             right = true;
         } else if (index_in_parent > 0) {
             // have left
             left_sibling = parent->children[index_in_parent - 1];
-            if (left_sibling->keys_count > ceil(DEGREE / 2)) {
+            if (left_sibling->type_of_node == LEAF && left_sibling->keys_count > ceil(DEGREE / 2)) {
                 sibling_who_can_compensate = left_sibling;
             }
         }
