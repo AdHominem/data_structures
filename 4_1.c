@@ -2,30 +2,28 @@
 #include "4_1_helper.h"
 #include "4_1_functions.h"
 #include <stdio.h>
+#include <time.h>
 #include <assert.h>
 
 void test() {
     BTree *tree = b_tree_create();
 
-    b_tree_add(tree, 1);
-    b_tree_add(tree, 2);
-    b_tree_add(tree, 3);
-    b_tree_add(tree, 4);
-    b_tree_add(tree, 5);
-    b_tree_add(tree, 6);
-    b_tree_add(tree, 7);
-    b_tree_add(tree, 8);
-    b_tree_add(tree, 9);
-    b_tree_add(tree, 10);
-    b_tree_add(tree, 11);
-    b_tree_remove(tree, 11);
+    srand(time(NULL));
+    size_t number = rand() % 20 + 10;
+    printf("%zu\n\n", number);
+
+    for (size_t i = 0; i < number; ++i) {
+        int value = rand() % 50;
+        if (rand() % 3) {
+            printf("Adding %d \n", value);
+            b_tree_add(tree, value);
+        } else {
+            printf("Subtracting %d \n ", value);
+            b_tree_remove(tree, value);
+        }
+    }
     b_tree_print(tree);
-    //TODO Code breaks here:
-    b_tree_remove(tree, 3);
 
-
-
-    b_tree_print(tree);
 
     b_tree_destroy(tree);
 }

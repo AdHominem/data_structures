@@ -86,27 +86,6 @@ ssize_t get_index_for_node(BTreeNode **node_array, size_t size, BTreeNode *node)
     return -1;
 }
 
-/// Prints tree_node keys, also showing how many of the key slots are still unset
-/// \param node The node whose keys are to be printed
-void b_tree_node_keys_print(BTreeNode *node) {
-    printf("[");
-    for (size_t j = 0; j < DEGREE - 1; ++j) {
-
-        // always print the key or a blank space
-        if (j < node->keys_count) {
-            printf("%d", node->keys[j]);
-        } else {
-            printf(" ");
-        }
-
-        // print a comma except during the last iteration
-        if (j != DEGREE - 2) {
-            printf(",");
-        }
-    }
-    printf("]\n");
-}
-
 /*
  * There are 4 cases:
  * - fits into key array
@@ -349,7 +328,8 @@ void b_tree_remove(BTree *tree, int value) {
 }
 
 void b_tree_add(BTree *tree, int value) {
-    if (tree->root) {
+    // make sure value is not already inside
+    if (tree->root && !b_tree_contains(tree, value)) {
         // get the fitting node
         BTreeNode *node = b_tree_search(tree, value);
 
@@ -364,36 +344,6 @@ void b_tree_add(BTree *tree, int value) {
         tree->root->keys[0] = value;
         tree->root->keys_count++;
     }
-}
-
-/// Prints all the nodes recursively, indenting them for better readability
-/// \param node The node to start printing from
-/// \param depth The depth of printing, this should be 1 initially
-void b_tree_nodes_print(BTreeNode *node, size_t depth){
-    if (node) {
-
-        // call this on all child nodes except for the last
-        for (size_t i = 0; i+1 < node->children_count; i++) {
-            b_tree_nodes_print(node->children[i], depth + 1);
-        }
-
-        for (size_t indentations = 1; indentations < depth; indentations++) {
-            printf("\t");
-        }
-
-        b_tree_node_keys_print(node);
-
-        // every node except a leaf always has a last child, too
-        if (node->type_of_node == NODE) {
-            b_tree_nodes_print(node->children[node->keys_count], depth + 1);
-        }
-    }
-}
-
-/// Prints all the nodes of a tree recursively, indenting them for better readability
-/// \param tree The tree to print
-void b_tree_print(BTree *tree) {
-    b_tree_nodes_print(tree->root, 1);
 }
 
 int parse_config(BTree *tree) {

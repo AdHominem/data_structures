@@ -5,6 +5,27 @@
 #include <memory.h>
 #include <assert.h>
 
+int b_tree_contains_internal(BTreeNode *node, int value) {
+    if (array_contains(node->keys, node->children_count, &value, int_type)) {
+        return true;
+    } else if (node->type_of_node == LEAF) {
+        return false;
+    } else {
+        //search in left subtrees
+        for (size_t i = 0; i < node->keys_count; ++i) {
+            if (node->keys[i] > value) {
+                return b_tree_contains_internal(node->children[i], value);
+            }
+        }
+        // if the value is too big, try fitting it in the right child node
+        return b_tree_contains_internal(node->children[node->keys_count], value);
+    }
+}
+
+int b_tree_contains(BTree *tree, int value) {
+    return tree->root && b_tree_contains_internal(tree->root, value);
+}
+
 LinkedListNode *linked_list_node_create(BTreeNode *value) {
     LinkedListNode *result = malloc(sizeof(LinkedListNode));
     if (result == NULL) {
@@ -233,6 +254,7 @@ void array_delete(void *array, size_t *size, const void *value, const data_type 
         int *cast_array = (int *) array;
         int cast_value = *((int*) value);
         int replace = false;
+
         for (size_t i = 0; i < *size; ++i) {
             if (cast_array[i] == cast_value) {
                 replace = true;
@@ -247,6 +269,7 @@ void array_delete(void *array, size_t *size, const void *value, const data_type 
         BTreeNode **cast_array = (BTreeNode **) array;
         BTreeNode *cast_value = (BTreeNode*) value;
         int replace = false;
+
         for (size_t i = 0; i < *size; ++i) {
             if (cast_array[i] == cast_value) {
                 replace = true;
@@ -260,6 +283,27 @@ void array_delete(void *array, size_t *size, const void *value, const data_type 
     }
 }
 
+/// Prints tree_node keys, also showing how many of the key slots are still unset
+/// \param node The node whose keys are to be printed
+void b_tree_node_keys_print(BTreeNode *node) {
+    printf("[");
+    for (size_t j = 0; j < DEGREE - 1; ++j) {
+
+        // always print the key or a blank space
+        if (j < node->keys_count) {
+            printf("%d", node->keys[j]);
+        } else {
+            printf(" ");
+        }
+
+        // print a comma except during the last iteration
+        if (j != DEGREE - 2) {
+            printf(",");
+        }
+    }
+    printf("]\n");
+}
+
 int compare(const void *first, const void *second, const data_type type) {
     if (type == int_type) {
         int a = *(int*) first;
@@ -268,4 +312,34 @@ int compare(const void *first, const void *second, const data_type type) {
     }
 
     return -2;
+}
+
+/// Prints all the nodes recursively, indenting them for better readability
+/// \param node The node to start printing from
+/// \param depth The depth of printing, this should be 1 initially
+void b_tree_nodes_print(BTreeNode *node, size_t depth){
+    if (node) {
+
+        // call this on all child nodes except for the last
+        for (size_t i = 0; i+1 < node->children_count; i++) {
+            b_tree_nodes_print(node->children[i], depth + 1);
+        }
+
+        for (size_t indentations = 1; indentations < depth; indentations++) {
+            printf("\t");
+        }
+
+        b_tree_node_keys_print(node);
+
+        // every node except a leaf always has a last child, too
+        if (node->type_of_node == NODE) {
+            b_tree_nodes_print(node->children[node->keys_count], depth + 1);
+        }
+    }
+}
+
+/// Prints all the nodes of a tree recursively, indenting them for better readability
+/// \param tree The tree to print
+void b_tree_print(BTree *tree) {
+    b_tree_nodes_print(tree->root, 1);
 }
