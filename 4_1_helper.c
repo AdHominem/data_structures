@@ -213,6 +213,7 @@ int array_contains(const void *array, const size_t size, const void *value, cons
 
 // assumes that all values are unique in the array
 // note that this updates the size
+// this simulates a dynamic data structure
 void delete_from_array(void *array, size_t *size, const void *value, const data_type type) {
 
     if (type == int_type) {

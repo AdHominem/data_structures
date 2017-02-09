@@ -213,13 +213,15 @@ void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
         int next_largest_value = node_with_next_largest_value->keys[0];
         node->keys[index_to_replace] = next_largest_value;
         // delete value
+        // note that we do not actually perform the swap here but instead just delete the next largest which would be
+        // replaced by the target value anyways
         delete_from_array(node_with_next_largest_value->keys, &node_with_next_largest_value->keys_count,
                           &next_largest_value, int_type);
         node = node_with_next_largest_value;
     }
 
-    // Overflow (less than ceil(DEGREE / 2) - 1)
-    if (node->keys_count < ceil(DEGREE / 2)) {
+    // Overflow (less than ceil(DEGREE / 2) - 1) except node is root
+    if (node != tree->root && node->keys_count < ceil(DEGREE / 2)) {
         // Leaf contains not enough keys so we have to somehow adjust it
         printf("Underflow detected!\n");
 
@@ -284,7 +286,7 @@ void b_tree_remove(BTree *tree, int value) {
         BTreeNode *node = b_tree_find_key(tree, value);
 
         // remove if the value is inside
-        if (value_in_array(node->keys, node->keys_count, value)) {
+        if (node && value_in_array(node->keys, node->keys_count, value)) {
             // if the node is the root, we need to link a bit different. That's why we need to pass the tree
             b_tree_remove_internal(node, value, tree);
         }
