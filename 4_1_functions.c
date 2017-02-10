@@ -8,6 +8,10 @@
 // this will ALWAYS return a node since there is always a node where a value is expected to be
 BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
 
+    if (array_contains(node->keys, node->keys_count, &value, int_type)) {
+        return NULL;
+    }
+
     // if we are at a leaf, return. we can not go down further!
     if (node->type_of_node == LEAF) {
         return node;
@@ -86,14 +90,6 @@ ssize_t get_index_for_node(BTreeNode **node_array, size_t size, BTreeNode *node)
     return -1;
 }
 
-/*
- * There are 4 cases:
- * - fits into key array
- * - root node flows over (easy split, 2 children will be created)
- * - regular node flows over
- *      pass middle value to the parent.
- *      In this case the parent will ALWAYS have DEGREE + 1 children and needs to
- */
 void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
     size_t keys_count = node->keys_count;
     int *keys = node->keys;
@@ -128,17 +124,18 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
             second_child->keys_count++;
         }
 
-        // if i have DEGREE + 1 children that means i need to restructure the tree
-        // that means linking the children appropriately
+        // if i have DEGREE + 1 children that means one of my children had an overflow and I need to restructure the tree
         if (node->children_count == DEGREE + 1) {
 
+            // distribute child nodes to the newly created two children.
+            // each child gets keys_count + 1 children
             // left half of children go to first child
-            for (size_t i = 0; i < (DEGREE + 1) / 2; ++i) {
+            for (size_t i = 0; i < first_child->keys_count + 1; ++i) {
                 b_tree_link_child_insert(first_child, node->children[i], i);
             }
 
             // right half of children go to second child
-            for (size_t i = (DEGREE + 1) / 2, j = 0; i < DEGREE + 1; ++i, ++j) {
+            for (size_t i = first_child->keys_count + 1, j = 0; i < DEGREE + 1; ++i, ++j) {
                 b_tree_link_child_insert(second_child, node->children[i], j);
             }
         }
@@ -329,13 +326,12 @@ void b_tree_remove(BTree *tree, int value) {
 
 void b_tree_add(BTree *tree, int value) {
     // make sure value is not already inside
-    if (tree->root && !b_tree_contains(tree, value)) {
-        // get the fitting node
+    if (tree->root) {
+        // get the fitting node. This will return NULL if the value already happens to be inside that node
         BTreeNode *node = b_tree_search(tree, value);
 
-        // add if the value is not already inside
-        if (!value_in_array(node->keys, node->keys_count, value)) {
-            // if the node is the root, we need to link a bit different. That's why we need to pass the tree
+        // if the node is the root, we need to link a bit different. That's why we need to pass the tree
+        if (node) {
             b_tree_insert(node, value, tree);
         }
     } else {

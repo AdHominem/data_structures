@@ -4,26 +4,20 @@
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
+#include <stdbool.h>
 
 void test() {
     BTree *tree = b_tree_create();
 
-    srand(time(NULL));
-    size_t number = rand() % 20 + 10;
-    printf("%zu\n\n", number);
-
+    srand((unsigned int) time(NULL));
+    size_t number = 5;//(size_t) (rand() % 20 + 10);
     for (size_t i = 0; i < number; ++i) {
         int value = rand() % 50;
-        if (rand() % 3) {
-            printf("Adding %d \n", value);
-            b_tree_add(tree, value);
-        } else {
-            printf("Subtracting %d \n ", value);
-            b_tree_remove(tree, value);
-        }
+        printf("Adding %d \n", value);
+        b_tree_add(tree, value);
     }
-    b_tree_print(tree);
 
+    b_tree_print(tree);
 
     b_tree_destroy(tree);
 }
