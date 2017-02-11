@@ -48,4 +48,6 @@ data_type get_input_type();
 
 void b_tree_remove(BTree *tree, int value);
 
+int generate_config();
+
 #endif //DATA_STRUCTURES_4_1_FUNCTIONS_H

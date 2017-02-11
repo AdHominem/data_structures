@@ -9,35 +9,33 @@
 void test() {
     BTree *tree = b_tree_create();
 
-    srand((unsigned int) time(NULL));
-    size_t number = 5;//(size_t) (rand() % 20 + 10);
-    for (size_t i = 0; i < number; ++i) {
-        int value = rand() % 50;
-        printf("Adding %d \n", value);
-        b_tree_add(tree, value);
-    }
-
-    b_tree_print(tree);
-
     b_tree_destroy(tree);
 }
 
 int main() {
-
-    test();
-
-//    BTree *tree = b_tree_create();
 //
-//    int status = parse_config(tree);
-//    if (status) {
-//        b_tree_destroy(tree);
-//        printf(status == 1 ? "Error: Config file could not be opened!\n" : "Error: Malformed config file!\n");
+//    int config_status = generate_config();
+//    if (config_status == -1) {
+//        printf("Error: Config file could not be created!\n");
 //        return 1;
 //    }
 //
-//    b_tree_print(tree);
-//
-//    b_tree_destroy(tree);
+//    printf("Created a config files with %d operations\n", config_status);
+
+    printf("Generating a tree of degree %d: \n", DEGREE);
+    BTree *tree = b_tree_create();
+
+    int status = parse_config(tree);
+    if (status) {
+        b_tree_destroy(tree);
+        printf("Error: Config file could not be opened!\n");
+        return 1;
+    }
+
+    printf("\nResulting tree: \n");
+    b_tree_print(tree);
+
+    b_tree_destroy(tree);
     return 0;
 }
 

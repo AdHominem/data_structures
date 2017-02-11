@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
+#include <time.h>
 
 // this will ALWAYS return a node since there is always a node where a value is expected to be
 BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
@@ -102,11 +103,11 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
     } else {
         // if it doesn't fit, make a temp array to hold all the values
         int temp[DEGREE];
-        memcpy(temp, keys, keys_count * sizeof(size_t));
+        memcpy(temp, keys, keys_count * sizeof(int));
         temp[keys_count] = value;
         qsort(temp, DEGREE, sizeof(int), compare_ints);
 
-        // determine middle
+        //determine middle
         size_t middle_index = DEGREE / 2;
         int middle = temp[middle_index];
 
@@ -183,10 +184,13 @@ BTreeNode *b_tree_find_next_largest_value(BTreeNode *node, int value) {
 
 void handle_underflow(BTreeNode *node, BTree *tree) {
     // UNDERFLOW DETECTION
+    if (node->keys[0] == 83) {
+        b_tree_print(tree);
+        printf("ho");
+    }
+
     if (node != tree->root && node->keys_count < ceil(DEGREE / 2)) {
         // Leaf contains not enough keys so we have to somehow adjust it
-        printf("Underflow detected!\n");
-
         size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
         BTreeNode *sibling_who_can_compensate = NULL;
         BTreeNode *left_sibling = NULL;
@@ -195,6 +199,7 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
         int right = false;
 
         // It's NOT enough to check if they have enough keys!!! Also the siblings must be leafs
+        // TODO: They must not be leafs but if they aren't, we need to transfer one child too
         if (index_in_parent < parent->keys_count) {
             // have right
             right_sibling = parent->children[index_in_parent + 1];
@@ -220,7 +225,6 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
             } else {
                 to_insert = sibling_who_can_compensate->keys[sibling_who_can_compensate->keys_count - 1];
             }
-            printf("One sibling can compensate with %d!\n", to_insert);
 
             // pass that value to parent
             array_delete(sibling_who_can_compensate->keys, &sibling_who_can_compensate->keys_count, &to_insert,
@@ -234,9 +238,9 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
             array_delete(parent->keys, &parent->keys_count, &parent->keys[index_to_insert], int_type);
 
         } else {
-            // else
+
+            // else merge with sibling!
             // move the extreme key from parent down
-            printf("I have to merge with one sibling!\n");
             BTreeNode *sibling = right ? right_sibling : left_sibling;
 
             // insert all keys of node into this sibling
@@ -273,12 +277,6 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
 
             // remove the moved key from parent
             array_delete(parent->keys, &parent->keys_count, &parent->keys[index], int_type);
-
-            // if parent has zero keys now, swap
-//            if (parent->keys_count == 0 && parent->parent == NULL) {
-//                tree->root = sibling;
-//                sibling->parent = NULL;
-//            }
 
             // finally check if parent underflows now
             handle_underflow(parent, tree);
@@ -350,10 +348,8 @@ int parse_config(BTree *tree) {
     while (fgets(line, BUFSIZ, config)) {
         int input;
         if (*line == '-' && !string_to_integer(line + 1, &input)) {
-            printf("Removing %d\n", input);
             b_tree_remove(tree, input);
         } else if (!string_to_integer(line, &input)) {
-            printf("Adding %d\n", input);
             b_tree_add(tree, input);
         }
     }
@@ -362,17 +358,21 @@ int parse_config(BTree *tree) {
     return 0;
 }
 
-data_type get_input_type() {
-    FILE *config = fopen("b_tree.config", "r");
-    if (config == NULL)
-        return invalid;
+int generate_config() {
+    FILE *config = fopen("b_tree.config", "w");
+    if (config == NULL) return -1;
 
-    int identifier = fgetc(config);
+    srand((unsigned int) time(NULL));
+    int operations = rand() % 2000;
+
+    fprintf(config, "i\n");
+
+    for (int i = 0; i < operations; ++i) {
+        char *operation = rand() % 7 ? "%d\n" : "-%d\n";
+        fprintf(config, operation, rand() % operations);
+    }
+
     fclose(config);
-
-    return identifier == 'i' ? int_type
-                             : identifier == 'f' ? float_type
-                                                 : identifier == 's' ? string_type
-                                                                     : invalid;
+    return operations;
 }
 
