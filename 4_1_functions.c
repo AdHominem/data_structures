@@ -5,9 +5,14 @@
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
+#include <assert.h>
 
 // this will ALWAYS return a node since there is always a node where a value is expected to be
 BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
+
+    if (!(node->type_of_node == LEAF && node->children_count == 0) && !(node->type_of_node == NODE && node->children_count > 0)) {
+        printf("sto");
+    }
 
     if (array_contains(node->keys, node->keys_count, &value, int_type)) {
         return NULL;
@@ -30,6 +35,9 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
 
 // returns NULL in case there is no such key
 BTreeNode *b_tree_find_key_internal(BTreeNode *node, int value) {
+
+    assert((node->type_of_node == LEAF && node->children_count == 0)
+           || (node->type_of_node == NODE && node->children_count > 0));
 
     if (array_contains(node->keys, node->keys_count, &value, int_type)) {
         return node;
@@ -184,11 +192,6 @@ BTreeNode *b_tree_find_next_largest_value(BTreeNode *node, int value) {
 
 void handle_underflow(BTreeNode *node, BTree *tree) {
     // UNDERFLOW DETECTION
-    if (node->keys[0] == 83) {
-        b_tree_print(tree);
-        printf("ho");
-    }
-
     if (node != tree->root && node->keys_count < ceil(DEGREE / 2)) {
         // Leaf contains not enough keys so we have to somehow adjust it
         size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
@@ -198,8 +201,6 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
         BTreeNode *parent = node->parent;
         int right = false;
 
-        // It's NOT enough to check if they have enough keys!!! Also the siblings must be leafs
-        // TODO: They must not be leafs but if they aren't, we need to transfer one child too
         if (index_in_parent < parent->keys_count) {
             // have right
             right_sibling = parent->children[index_in_parent + 1];
@@ -308,6 +309,13 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
             // finally check if parent underflows now
             handle_underflow(parent, tree);
         }
+    } else if (node->keys_count < ceil(DEGREE / 2)) {
+        // This happens when the root node has an underflow and one child.
+        if (node->children_count == 1) {
+            tree->root = node->children[0];
+            node->children[0]->parent = NULL;
+
+        }
     }
 }
 
@@ -337,6 +345,7 @@ void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
 }
 
 void b_tree_remove(BTree *tree, int value) {
+
     if (tree->root) {
         // get the fitting node
         BTreeNode *node = b_tree_find_key(tree, value);
@@ -385,17 +394,22 @@ int parse_config(BTree *tree) {
     return 0;
 }
 
-int generate_config() {
+int generate_config(size_t maximum_size) {
     FILE *config = fopen("b_tree.config", "w");
     if (config == NULL) return -1;
 
     srand((unsigned int) time(NULL));
-    int operations = rand() % 2000;
+    int operations = rand() % (int) maximum_size;
+    if (operations < 3) operations = 3;
 
     fprintf(config, "i\n");
 
-    for (int i = 0; i < operations; ++i) {
-        char *operation = rand() % 7 ? "%d\n" : "-%d\n";
+    for (int i = 0; i < operations / 2; ++i) {
+        fprintf(config, "%d\n", rand() % operations);
+    }
+
+    for (int i = 0; i < operations / 2; ++i) {
+        char *operation = rand() % 2 ? "%d\n" : "-%d\n";
         fprintf(config, operation, rand() % operations);
     }
 

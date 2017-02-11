@@ -3,7 +3,7 @@
 
 #include <stdlib.h>
 
-#define DEGREE 3
+#define DEGREE 4
 
 typedef struct b_tree_node BTreeNode;
 typedef enum {NODE, LEAF} node_type;

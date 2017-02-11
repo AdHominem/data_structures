@@ -44,10 +44,8 @@ void b_tree_print(BTree *tree);
 
 int parse_config(BTree *tree);
 
-data_type get_input_type();
-
 void b_tree_remove(BTree *tree, int value);
 
-int generate_config();
+int generate_config(size_t maximum_size);
 
 #endif //DATA_STRUCTURES_4_1_FUNCTIONS_H
