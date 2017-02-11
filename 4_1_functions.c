@@ -192,7 +192,7 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
     if (node != tree->root && node->keys_count < ceil(DEGREE / 2)) {
         // Leaf contains not enough keys so we have to somehow adjust it
         size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
-        BTreeNode *sibling_who_can_compensate = NULL;
+        BTreeNode *compensator = NULL;
         BTreeNode *left_sibling = NULL;
         BTreeNode *right_sibling = NULL;
         BTreeNode *parent = node->parent;
@@ -203,40 +203,67 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
         if (index_in_parent < parent->keys_count) {
             // have right
             right_sibling = parent->children[index_in_parent + 1];
-            if (right_sibling->type_of_node == LEAF && right_sibling->keys_count > ceil(DEGREE / 2)) {
-                sibling_who_can_compensate = right_sibling;
+            if (right_sibling->keys_count > ceil(DEGREE / 2)) {
+                compensator = right_sibling;
             }
             right = true;
         } else if (index_in_parent > 0) {
             // have left
             left_sibling = parent->children[index_in_parent - 1];
-            if (left_sibling->type_of_node == LEAF && left_sibling->keys_count > ceil(DEGREE / 2)) {
-                sibling_who_can_compensate = left_sibling;
+            if (left_sibling->keys_count > ceil(DEGREE / 2)) {
+                compensator = left_sibling;
             }
         }
 
         // if siblings can compensate
-        if (sibling_who_can_compensate) {
+        if (compensator) {
             int to_insert;
             // if left, then the value to insert will be the rightmost
             // else it will be the leftmost
             if (right) {
-                to_insert = sibling_who_can_compensate->keys[0];
+                to_insert = compensator->keys[0];
             } else {
-                to_insert = sibling_who_can_compensate->keys[sibling_who_can_compensate->keys_count - 1];
+                to_insert = compensator->keys[compensator->keys_count - 1];
             }
 
             // pass that value to parent
-            array_delete(sibling_who_can_compensate->keys, &sibling_who_can_compensate->keys_count, &to_insert,
-                         int_type);
-            b_tree_insert(parent, to_insert, tree);
+            array_delete(compensator->keys, &compensator->keys_count, &to_insert, int_type);
+            // note that parent keys can overflow here, so we need to perform this on a temp array and update parent later
+            size_t temp_size = parent->keys_count + 1;
+            int temp[temp_size];
+            memcpy(temp, parent->keys, parent->keys_count * sizeof(int));
+            temp[temp_size - 1] = to_insert;
+            qsort(temp, temp_size, sizeof(int), compare_ints);
 
-            // if right, move the leftmost value of parent into node
-            // if left, move the rightmost value of parent into node
-            size_t index_to_insert = right ? 0 : parent->keys_count - 1;
-            b_tree_insert(node, parent->keys[index_to_insert], tree);
-            array_delete(parent->keys, &parent->keys_count, &parent->keys[index_to_insert], int_type);
+            // if right, move the leftmost value of temp into node
+            // if left, move the rightmost value of temp into node
+            size_t index_to_insert = right ? 0 : temp_size - 1;
+            b_tree_insert(node, temp[index_to_insert], tree);
 
+            // update temp
+            array_delete(temp, &temp_size, &temp[index_to_insert], int_type);
+
+            // now update the parent
+            for (size_t i = 0; i < parent->keys_count; ++i) {
+                parent->keys[i] = temp[i];
+            }
+
+            // now transfer the child from sibling to node
+            if (compensator->type_of_node == NODE) {
+                if (right) {
+                    // take the leftmost child of sibling
+                    BTreeNode *child = compensator->children[0];
+                    b_tree_link_child_add(node, child);
+                    array_delete(compensator->children, &compensator->children_count,
+                                 child, node_pointer_type);
+                } else {
+                    // take the rightmost one
+                    BTreeNode *child = compensator->children[compensator->children_count - 1];
+                    b_tree_link_child_insert(node, child, 0);
+                    array_delete(compensator->children, &compensator->children_count,
+                                 child, node_pointer_type);
+                }
+            }
         } else {
 
             // else merge with sibling!

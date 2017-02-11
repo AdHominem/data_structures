@@ -31,7 +31,7 @@ int main() {
         printf("Error: Config file could not be opened!\n");
         return 1;
     }
-
+    
     printf("\nResulting tree: \n");
     b_tree_print(tree);
 
