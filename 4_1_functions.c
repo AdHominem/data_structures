@@ -7,11 +7,15 @@
 #include <time.h>
 #include <assert.h>
 
-// this will ALWAYS return a node since there is always a node where a value is expected to be
+// this will return the node where a value is expected to be
+// in case of an error it will return NULL
 BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
 
-    if (!(node->type_of_node == LEAF && node->children_count == 0) && !(node->type_of_node == NODE && node->children_count > 0)) {
-        printf("sto");
+    if ((node->type_of_node == LEAF && node->children_count > 0)
+        || (node->type_of_node == NODE && node->children_count == 0)) {
+        // This should never happen (integrity check only)
+        printf("Foo");
+        return NULL;
     }
 
     if (array_contains(node->keys, node->keys_count, &value, int_type)) {
@@ -192,7 +196,7 @@ BTreeNode *b_tree_find_next_largest_value(BTreeNode *node, int value) {
 
 void handle_underflow(BTreeNode *node, BTree *tree) {
     // UNDERFLOW DETECTION
-    if (node != tree->root && node->keys_count < ceil(DEGREE / 2)) {
+    if (node != tree->root && node->keys_count < ceil(DEGREE / 2) - 1) {
         // Leaf contains not enough keys so we have to somehow adjust it
         size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
         BTreeNode *compensator = NULL;
@@ -358,15 +362,17 @@ void b_tree_remove(BTree *tree, int value) {
     }
 }
 
-void b_tree_add(BTree *tree, int value) {
+int b_tree_add(BTree *tree, int value) {
     // make sure value is not already inside
     if (tree->root) {
         // get the fitting node. This will return NULL if the value already happens to be inside that node
         BTreeNode *node = b_tree_search(tree, value);
 
-        // if the node is the root, we need to link a bit different. That's why we need to pass the tree
         if (node) {
             b_tree_insert(node, value, tree);
+        } else {
+            printf("An integrity error occurred, can not insert %d\n", value);
+            return 1;
         }
     } else {
         // if root is null, add a new one with value as first key
@@ -374,6 +380,7 @@ void b_tree_add(BTree *tree, int value) {
         tree->root->keys[0] = value;
         tree->root->keys_count++;
     }
+    return 0;
 }
 
 int parse_config(BTree *tree) {
@@ -383,10 +390,14 @@ int parse_config(BTree *tree) {
     char line[BUFSIZ];
     while (fgets(line, BUFSIZ, config)) {
         int input;
+        b_tree_print(tree);
+        printf("\n");
         if (*line == '-' && !string_to_integer(line + 1, &input)) {
             b_tree_remove(tree, input);
         } else if (!string_to_integer(line, &input)) {
-            b_tree_add(tree, input);
+            if (b_tree_add(tree, input)) {
+                printf("Skipping to parse %d\n", input);
+            }
         }
     }
 
