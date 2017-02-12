@@ -5,27 +5,6 @@
 #include <memory.h>
 #include <assert.h>
 
-int b_tree_contains_internal(BTreeNode *node, int value) {
-    if (array_contains(node->keys, node->children_count, &value, int_type)) {
-        return true;
-    } else if (node->type_of_node == LEAF) {
-        return false;
-    } else {
-        //search in left subtrees
-        for (size_t i = 0; i < node->keys_count; ++i) {
-            if (node->keys[i] > value) {
-                return b_tree_contains_internal(node->children[i], value);
-            }
-        }
-        // if the value is too big, try fitting it in the right child node
-        return b_tree_contains_internal(node->children[node->keys_count], value);
-    }
-}
-
-int b_tree_contains(BTree *tree, int value) {
-    return tree->root && b_tree_contains_internal(tree->root, value);
-}
-
 LinkedListNode *linked_list_node_create(BTreeNode *value) {
     LinkedListNode *result = malloc(sizeof(LinkedListNode));
     if (result == NULL) {
@@ -59,7 +38,7 @@ LinkedList *linked_list_destroy(LinkedList *list) {
     return NULL;
 }
 
-size_t linked_list_get_length(LinkedList *list) {
+size_t linked_list_get_length(const LinkedList *list) {
     LinkedListNode *head = list->head;
     size_t result = 0;
 
@@ -71,7 +50,7 @@ size_t linked_list_get_length(LinkedList *list) {
     return result;
 }
 
-int linked_list_insert(LinkedList *list, BTreeNode * value, size_t index) {
+int linked_list_insert(LinkedList *list, BTreeNode * value, const size_t index) {
 
     // Catch index out of range
     if (index > linked_list_get_length(list)) {
@@ -104,7 +83,7 @@ int linked_list_insert(LinkedList *list, BTreeNode * value, size_t index) {
     return 0;
 }
 
-void linked_list_as_array(LinkedList *list, BTreeNode *array[DEGREE + 1]) {
+void linked_list_as_array(const LinkedList *list, BTreeNode *array[DEGREE + 1]) {
 
     LinkedListNode *node = list->head;
 
@@ -122,15 +101,6 @@ int compare_ints(const void *first, const void *second) {
     int a = *(int*) first;
     int b = *(int*) second;
     return a < b ? -1 : a > b;
-}
-
-int value_in_array(int *array, size_t size, int value) {
-    for (size_t i = 0; i < size; ++i) {
-        if (array[i] == value) {
-            return true;
-        }
-    }
-    return false;
 }
 
 BTreeNode *b_tree_node_destroy_recursively(BTreeNode *node) {
@@ -176,7 +146,6 @@ int string_to_integer(const char *string, int *integer) {
 }
 
 BTreeNode *b_tree_node_create() {
-
     BTreeNode *result = malloc(sizeof(BTreeNode));
     if (result == NULL) {
         return NULL;
@@ -189,7 +158,7 @@ BTreeNode *b_tree_node_create() {
     return result;
 }
 
-ssize_t get_index_for_value(int array[DEGREE], int value) {
+ssize_t array_get_index(const int *array, const int value) {
     for (size_t i = 0; i < DEGREE; ++i) {
         if (array[i] == value) {
             return i;
@@ -199,7 +168,7 @@ ssize_t get_index_for_value(int array[DEGREE], int value) {
 }
 
 // note that this updates the size
-void array_insert(BTreeNode **array, size_t *array_size, size_t index, BTreeNode *to_insert) {
+void array_insert(BTreeNode **array, size_t *array_size, const size_t index, BTreeNode *to_insert) {
     LinkedList *list = linked_list_create();
     for (size_t i = 0; i < *array_size; ++i) {
         linked_list_add(list, array[i]);
@@ -285,7 +254,7 @@ void array_delete(void *array, size_t *size, const void *value, const data_type 
 
 /// Prints tree_node keys, also showing how many of the key slots are still unset
 /// \param node The node whose keys are to be printed
-void b_tree_node_keys_print(BTreeNode *node) {
+void b_tree_node_keys_print(const BTreeNode *node) {
     printf("[");
     for (size_t j = 0; j < DEGREE - 1; ++j) {
 
@@ -304,20 +273,10 @@ void b_tree_node_keys_print(BTreeNode *node) {
     printf("]\n");
 }
 
-int compare(const void *first, const void *second, const data_type type) {
-    if (type == int_type) {
-        int a = *(int*) first;
-        int b = *(int*) second;
-        return a < b ? -1 : a > b;
-    }
-
-    return -2;
-}
-
 /// Prints all the nodes recursively, indenting them for better readability
 /// \param node The node to start printing from
 /// \param depth The depth of printing, this should be 1 initially
-void b_tree_nodes_print(BTreeNode *node, size_t depth){
+void b_tree_nodes_print(const BTreeNode *node, const size_t depth){
     if (node) {
 
         // call this on all child nodes except for the last
@@ -329,7 +288,7 @@ void b_tree_nodes_print(BTreeNode *node, size_t depth){
             printf("\t");
         }
 
-        b_tree_node_keys_print(node);
+        b_tree_node_keys_print((BTreeNode *) node);
 
         // every node except a leaf always has a last child, too
         if (node->type_of_node == NODE) {
@@ -340,6 +299,52 @@ void b_tree_nodes_print(BTreeNode *node, size_t depth){
 
 /// Prints all the nodes of a tree recursively, indenting them for better readability
 /// \param tree The tree to print
-void b_tree_print(BTree *tree) {
+void b_tree_print(const BTree *tree) {
     b_tree_nodes_print(tree->root, 1);
+}
+
+ssize_t b_tree_node_get_index(const BTreeNode **node_array, const size_t size, const BTreeNode *node) {
+    if (node == NULL) return -1;
+
+    for (size_t i = 0; i < size; ++i) {
+        if (node_array[i] == node) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+/// Inserts a new child at a specific position into parent's children
+void b_tree_link_child_insert(BTreeNode *parent, BTreeNode *child, const size_t index) {
+    child->parent = parent;
+    array_insert(parent->children, &parent->children_count, index, child);
+    parent->type_of_node = NODE;
+}
+
+/// Links two nodes, appending the child to the parent's list
+void b_tree_link_child_add(BTreeNode *parent, BTreeNode *child) {
+    child->parent = parent;
+    array_add(parent->children, &parent->children_count, child);
+    parent->type_of_node = NODE;
+}
+
+void b_tree_overwrite_child(BTreeNode *parent, BTreeNode *child, const size_t index) {
+    child->parent = parent;
+    parent->children[index] = child;
+    parent->type_of_node = NODE;
+}
+
+/// This one is used for deletion of inner nodes
+BTreeNode *b_tree_find_next_largest_value(BTreeNode *node, const int value) {
+
+    // go right subtree of this key (every key has one, index will be key index + 1)
+    BTreeNode *current = node->children[array_get_index(node->keys, value) + 1];
+
+    // then go very left as long as there are nodes and return
+    while (current->type_of_node != LEAF) {
+        current = current->children[0];
+    }
+
+    return current;
 }

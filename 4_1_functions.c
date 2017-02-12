@@ -5,26 +5,13 @@
 #include <math.h>
 #include <stdbool.h>
 #include <time.h>
-#include <assert.h>
 
-// this will return the node where a value is expected to be
-// in case of an error it will return NULL
-BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
-
-    if ((node->type_of_node == LEAF && node->children_count > 0)
-        || (node->type_of_node == NODE && node->children_count == 0)) {
-        // This should never happen (integrity check only)
-        printf("Foo");
-        return NULL;
-    }
-
+BTreeNode *b_tree_search_internal(const BTreeNode *node, const int value) {
     if (array_contains(node->keys, node->keys_count, &value, int_type)) {
         return NULL;
-    }
-
-    // if we are at a leaf, return. we can not go down further!
-    if (node->type_of_node == LEAF) {
-        return node;
+    } else if (node->type_of_node == LEAF) {
+        // if we are at a leaf, return. we can not go down further!
+        return (BTreeNode *) node;
     } else {
         //search in left subtrees
         for (size_t i = 0; i < node->keys_count; ++i) {
@@ -37,89 +24,51 @@ BTreeNode *b_tree_search_internal(BTreeNode *node, int value) {
     }
 }
 
-// returns NULL in case there is no such key
-BTreeNode *b_tree_find_key_internal(BTreeNode *node, int value) {
-
-    assert((node->type_of_node == LEAF && node->children_count == 0)
-           || (node->type_of_node == NODE && node->children_count > 0));
-
+BTreeNode *b_tree_find_key_internal(const BTreeNode *node, const int value) {
     if (array_contains(node->keys, node->keys_count, &value, int_type)) {
-        return node;
-    } else {
+        return (BTreeNode *) node;
+    } else if (node->type_of_node == LEAF) {
         // if we are at a leaf, return. we can not go down further!
-        if (node->type_of_node == LEAF) {
-            return NULL;
-        } else {
-            //search in left subtrees
-            for (size_t i = 0; i < node->keys_count; ++i) {
-                if (node->keys[i] > value) {
-                    return b_tree_find_key_internal(node->children[i], value);
-                }
+        return NULL;
+    } else {
+        //search in left subtrees
+        for (size_t i = 0; i < node->keys_count; ++i) {
+            if (node->keys[i] > value) {
+                return b_tree_find_key_internal(node->children[i], value);
             }
-            // if the value is too big, try searching it in the right child node
-            return b_tree_find_key_internal(node->children[node->keys_count], value);
         }
+        // if the value is too big, try searching it in the right child node
+        return b_tree_find_key_internal(node->children[node->keys_count], value);
     }
 }
 
-// Checks if a given value is in the tree and returns a pointer to the Node which is expected to contain it
-// note that this will assume you want to insert a new value. if you want to find a node with a specific key, use find
-BTreeNode *b_tree_search(BTree *tree, int value) {
+/// This will be used for insertion, returning NULL if the value is already in the node
+BTreeNode *b_tree_search(const BTree *tree, const int value) {
     return b_tree_search_internal(tree->root, value);
 }
 
-// returns a node containing a defined key
-BTreeNode *b_tree_find_key(BTree *tree, int value) {
+/// This will be used for removal, returning a node only if the value is in the node
+BTreeNode *b_tree_find_key(const BTree *tree, const int value) {
     return b_tree_find_key_internal(tree->root, value);
 }
 
-void b_tree_link_child_insert(BTreeNode *parent, BTreeNode *child, size_t index) {
-    child->parent = parent;
-    array_insert(parent->children, &parent->children_count, index, child);
-    parent->type_of_node = NODE;
-}
-
-void b_tree_link_child_add(BTreeNode *parent, BTreeNode *child) {
-    child->parent = parent;
-    array_add(parent->children, &parent->children_count, child);
-    parent->type_of_node = NODE;
-}
-
-void b_tree_overwrite_child(BTreeNode *parent, BTreeNode *child, size_t index) {
-    child->parent = parent;
-    parent->children[index] = child;
-    parent->type_of_node = NODE;
-}
-
-ssize_t get_index_for_node(BTreeNode **node_array, size_t size, BTreeNode *node) {
-    if (node == NULL) return -1;
-
-    for (size_t i = 0; i < size; ++i) {
-        if (node_array[i] == node) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
+void b_tree_insert(BTreeNode *node, const int value, BTree *tree) {
     size_t keys_count = node->keys_count;
     int *keys = node->keys;
 
-    // try to insert in node
+    // Case 1: Try to insert in node
     if (keys_count < DEGREE - 1) {
         keys[keys_count] = value;
         qsort(keys, keys_count + 1, sizeof(int), compare_ints);
         node->keys_count++;
     } else {
-        // if it doesn't fit, make a temp array to hold all the values
+        // Case 2: If it doesn't fit, make a temp array to hold all the values
         int temp[DEGREE];
         memcpy(temp, keys, keys_count * sizeof(int));
         temp[keys_count] = value;
         qsort(temp, DEGREE, sizeof(int), compare_ints);
 
-        //determine middle
+        // determine middle
         size_t middle_index = DEGREE / 2;
         int middle = temp[middle_index];
 
@@ -155,6 +104,7 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
 
         // we only need to create a new root when the old node was the root
         if (node->parent == NULL) {
+            free(node);
             node = b_tree_node_create();
             node->keys[0] = middle;
             node->keys_count++;
@@ -166,7 +116,7 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
             tree->root = node;
         } else {
             // otherwise we just have to add the middle to the parent node
-            ssize_t insertion_index = get_index_for_node(node->parent->children, node->parent->children_count, node);
+            ssize_t insertion_index = b_tree_node_get_index((const BTreeNode **) node->parent->children, node->parent->children_count, node);
             if (insertion_index == -1) {
                 exit(1);
             }
@@ -181,24 +131,9 @@ void b_tree_insert(BTreeNode *node, int value, BTree *tree) {
     }
 }
 
-BTreeNode *b_tree_find_next_largest_value(BTreeNode *node, int value) {
-
-    // go right subtree of this key (every key has one, index will be key index + 1)
-    BTreeNode *current = node->children[get_index_for_value(node->keys, value) + 1];
-
-    // then go very left as long as there are nodes and return
-    while (current->type_of_node != LEAF) {
-        current = current->children[0];
-    }
-
-    return current;
-}
-
 void handle_underflow(BTreeNode *node, BTree *tree) {
-    // UNDERFLOW DETECTION
-    if (node != tree->root && node->keys_count < ceil(DEGREE / 2) - 1) {
-        // Leaf contains not enough keys so we have to somehow adjust it
-        size_t index_in_parent = (size_t) get_index_for_node(node->parent->children, node->parent->children_count, node);
+    if (node != tree->root && node->keys_count < ceil(DEGREE / 2.0) - 1) {
+        size_t index_in_parent = (size_t) b_tree_node_get_index((const BTreeNode **) node->parent->children, node->parent->children_count, node);
         BTreeNode *compensator = NULL;
         BTreeNode *left_sibling = NULL;
         BTreeNode *right_sibling = NULL;
@@ -206,25 +141,22 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
         int right = false;
 
         if (index_in_parent < parent->keys_count) {
-            // have right
             right_sibling = parent->children[index_in_parent + 1];
             if (right_sibling->keys_count > ceil(DEGREE / 2)) {
                 compensator = right_sibling;
             }
             right = true;
         } else if (index_in_parent > 0) {
-            // have left
             left_sibling = parent->children[index_in_parent - 1];
             if (left_sibling->keys_count > ceil(DEGREE / 2)) {
                 compensator = left_sibling;
             }
         }
 
-        // if siblings can compensate
+        // Case 1: One siblings can compensate
         if (compensator) {
             int to_insert;
-            // if left, then the value to insert will be the rightmost
-            // else it will be the leftmost
+            // if left, then the value to insert will be the rightmost, else leftmost
             if (right) {
                 to_insert = compensator->keys[0];
             } else {
@@ -232,16 +164,15 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
             }
 
             // pass that value to parent
-            array_delete(compensator->keys, &compensator->keys_count, &to_insert, int_type);
             // note that parent keys can overflow here, so we need to perform this on a temp array and update parent later
+            array_delete(compensator->keys, &compensator->keys_count, &to_insert, int_type);
             size_t temp_size = parent->keys_count + 1;
             int temp[temp_size];
             memcpy(temp, parent->keys, parent->keys_count * sizeof(int));
             temp[temp_size - 1] = to_insert;
             qsort(temp, temp_size, sizeof(int), compare_ints);
 
-            // if right, move the leftmost value of temp into node
-            // if left, move the rightmost value of temp into node
+            // if right, move the leftmost value of temp into node, else rightmost
             size_t index_to_insert = right ? 0 : temp_size - 1;
             b_tree_insert(node, temp[index_to_insert], tree);
 
@@ -270,8 +201,7 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
                 }
             }
         } else {
-
-            // else merge with sibling!
+            // Case 2: Merge with sibling
             // move the extreme key from parent down
             BTreeNode *sibling = right ? right_sibling : left_sibling;
 
@@ -297,7 +227,7 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
             }
 
             // get siblings index
-            size_t index = (size_t) get_index_for_node(parent->children, parent->children_count, sibling);
+            size_t index = (size_t) b_tree_node_get_index((const BTreeNode **) parent->children, parent->children_count, sibling);
 
             // if merge with right, then move the index-1-th key into sibling
             // else move the index-th key into sibling
@@ -306,6 +236,7 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
 
             // remove old node (which is empty anyways)
             array_delete(parent->children, &parent->children_count, node, node_pointer_type);
+            free(node);
 
             // remove the moved key from parent
             array_delete(parent->keys, &parent->keys_count, &parent->keys[index], int_type);
@@ -313,31 +244,29 @@ void handle_underflow(BTreeNode *node, BTree *tree) {
             // finally check if parent underflows now
             handle_underflow(parent, tree);
         }
-    } else if (node->keys_count < ceil(DEGREE / 2)) {
+    } else if (node->keys_count == 0 && node->children_count == 1) {
         // This happens when the root node has an underflow and one child.
-        if (node->children_count == 1) {
-            tree->root = node->children[0];
-            node->children[0]->parent = NULL;
-
-        }
+        // Note that we do not need to transfer any children because root can only underflow with 0 keys
+        free(tree->root);
+        tree->root = node->children[0];
+        node->children[0]->parent = NULL;
     }
 }
 
-void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
+void b_tree_remove_internal(BTreeNode *node, const int value, BTree *tree) {
 
-    // DELETION
     if (node->type_of_node == LEAF) {
-        // LEAF
+        // Case 1: LEAF
         array_delete(node->keys, &node->keys_count, &value, int_type);
     } else {
-        // NODE
+        // Case 2: NODE
         // Internal node contains the value
         // replace value with the next largest value
         BTreeNode *node_with_next_largest_value = b_tree_find_next_largest_value(node, value);
-        ssize_t index_to_replace = get_index_for_value(node->keys, value);
+        ssize_t index_to_replace = array_get_index(node->keys, value);
         int next_largest_value = node_with_next_largest_value->keys[0];
         node->keys[index_to_replace] = next_largest_value;
-        // delete value
+
         // note that we do not actually perform the swap here but instead just delete the next largest which would be
         // replaced by the target value anyways
         array_delete(node_with_next_largest_value->keys, &node_with_next_largest_value->keys_count,
@@ -348,22 +277,20 @@ void b_tree_remove_internal(BTreeNode *node, int value, BTree *tree) {
     handle_underflow(node, tree);
 }
 
-void b_tree_remove(BTree *tree, int value) {
-
+void b_tree_remove(BTree *tree, const int value) {
     if (tree->root) {
         // get the fitting node
         BTreeNode *node = b_tree_find_key(tree, value);
 
         // remove if the value is inside
-        if (node && value_in_array(node->keys, node->keys_count, value)) {
-            // if the node is the root, we need to link a bit different. That's why we need to pass the tree
+        if (node && array_contains(node->keys, node->keys_count, &value, int_type)) {
             b_tree_remove_internal(node, value, tree);
         }
     }
 }
 
-int b_tree_add(BTree *tree, int value) {
-    // make sure value is not already inside
+/// Assumes the value is not already in the tree
+int b_tree_add(BTree *tree, const int value) {
     if (tree->root) {
         // get the fitting node. This will return NULL if the value already happens to be inside that node
         BTreeNode *node = b_tree_search(tree, value);
@@ -371,7 +298,6 @@ int b_tree_add(BTree *tree, int value) {
         if (node) {
             b_tree_insert(node, value, tree);
         } else {
-            printf("An integrity error occurred, can not insert %d\n", value);
             return 1;
         }
     } else {
@@ -390,14 +316,11 @@ int parse_config(BTree *tree) {
     char line[BUFSIZ];
     while (fgets(line, BUFSIZ, config)) {
         int input;
-        b_tree_print(tree);
-        printf("\n");
+
         if (*line == '-' && !string_to_integer(line + 1, &input)) {
             b_tree_remove(tree, input);
         } else if (!string_to_integer(line, &input)) {
-            if (b_tree_add(tree, input)) {
-                printf("Skipping to parse %d\n", input);
-            }
+            b_tree_add(tree, input);
         }
     }
 
@@ -405,7 +328,7 @@ int parse_config(BTree *tree) {
     return 0;
 }
 
-int generate_config(size_t maximum_size) {
+int generate_config(const size_t maximum_size) {
     FILE *config = fopen("b_tree.config", "w");
     if (config == NULL) return -1;
 
@@ -415,11 +338,7 @@ int generate_config(size_t maximum_size) {
 
     fprintf(config, "i\n");
 
-    for (int i = 0; i < operations / 2; ++i) {
-        fprintf(config, "%d\n", rand() % operations);
-    }
-
-    for (int i = 0; i < operations / 2; ++i) {
+    for (int i = 0; i < operations; ++i) {
         char *operation = rand() % 2 ? "%d\n" : "-%d\n";
         fprintf(config, operation, rand() % operations);
     }

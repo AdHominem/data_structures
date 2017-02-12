@@ -5,7 +5,7 @@
 
 int main() {
 
-    int config_status = generate_config(DEGREE * 25);
+    int config_status = generate_config(DEGREE * 40);
     if (config_status == -1) {
         printf("Error: Config file could not be created!\n");
         return 1;

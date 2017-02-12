@@ -7,7 +7,7 @@
 
 typedef struct b_tree_node BTreeNode;
 typedef enum {NODE, LEAF} node_type;
-typedef enum {int_type, float_type, string_type, node_pointer_type, invalid} data_type;
+typedef enum {int_type, node_pointer_type} data_type;
 struct b_tree_node {
     node_type type_of_node;
     size_t children_count;
