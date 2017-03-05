@@ -553,6 +553,10 @@ void add_random(AdjacencyList *list, int limit) {
 int main() {
 
     // Starting node
+    AdjacencyList *list = adjacency_list_create();
+    for (int i = 0; i < 5; ++i) {
+        adjacency_list_add(list, 5);
+    }
 
     // Node bitmap as an int array
 

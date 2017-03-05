@@ -105,8 +105,8 @@ int interpolation_search_modified(const int *array, const size_t size, const int
            && key >= array[lower_bound]
            && key <= array[upper_bound]) {
         ++*iterations;
-        middle = lower_bound + ((key - array[lower_bound]) * (upper_bound - lower_bound)
-                                / (array[upper_bound] - array[lower_bound]));
+        middle = (int) ((double) lower_bound + (((double) key - (double) array[lower_bound]) * ((double) upper_bound - (double) lower_bound)
+                                       / ((double) array[upper_bound] - (double) array[lower_bound])));
         if (array[middle] < key) {
             lower_bound = middle + 1;
         } else if (key < array[middle]) {
